@@ -1,0 +1,19 @@
+"use client";
+
+import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "./auth-provider";
+import { CartProvider } from "./cart-provider";
+import { ThemeProvider } from "./theme-provider";
+
+export function AppProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <CartProvider>
+          {children}
+          <Toaster position="top-right" richColors />
+        </CartProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
+}
