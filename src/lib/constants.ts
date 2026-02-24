@@ -1,8 +1,7 @@
 export const BUSINESS = {
   name: "Madonna Link Express Ventures",
   landmark: "Madonna Shopping Arena",
-  address:
-    "21/22 Akinosho Street, Off Afariogun, Along Airport Road, Oshodi, Lagos, Nigeria",
+  address: "21/22 Akinosho Street, Off Afariogun, Along Airport Road, Oshodi, Lagos, Nigeria",
   phone: "07063006033",
   email: "madonnaexpresslinkventure@gmail.com",
   whatsapp: "2347063006033",
@@ -33,6 +32,6 @@ export const CATEGORIES_SEED = [
     name: "Foodstuff & Groceries",
     slug: "foodstuff-groceries",
     description:
-      "Rice, Beans, Garri, Palm oil, grounded spices, herbs, yam flour, okpa and lots more",
+      "Rice, Beans, Cassava flakes, Garri, Noodles, Palm oil. Grounded ogbono, egusi, pepper. Abacha, Dry fish, Crayfish, Spices, herbs, Pigeon pea, Yam flour, Bambara flour (Okpa) and lots more.",
   },
 ];

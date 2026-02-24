@@ -47,6 +47,7 @@ export type UserProfile = {
 
 export type CartItem = {
   productId: string;
+  productSlug?: string;
   name: string;
   price: number;
   qty: number;

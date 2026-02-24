@@ -10,9 +10,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-async function uploadToCloudinary(file: File) {
-  const signRes = await fetch("/api/cloudinary/sign", { method: "POST" });
+async function uploadToCloudinary(file: File, token: string) {
+  const signRes = await fetch("/api/cloudinary/sign", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
   const signData = await signRes.json();
+  if (!signRes.ok) {
+    throw new Error(signData.error || "Failed to get upload signature");
+  }
 
   const formData = new FormData();
   formData.append("file", file);
@@ -146,7 +152,9 @@ export default function AdminProductsPage() {
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (!file) return;
-                const uploaded = await uploadToCloudinary(file);
+                const token = await getToken();
+                if (!token) return;
+                const uploaded = await uploadToCloudinary(file, token);
                 setForm((prev: any) => ({
                   ...prev,
                   images: [...prev.images, { publicId: uploaded.public_id, url: uploaded.secure_url, alt: prev.name || "Product image" }],

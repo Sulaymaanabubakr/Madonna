@@ -28,6 +28,7 @@ Production-ready Next.js 14+ ecommerce website for **Madonna Link Express Ventur
 - Home, Shop, Category, Product details, Cart, Checkout
 - Account auth (email/password + Google)
 - Public order tracking with email/phone verification
+- Contact and newsletter submission endpoints
 - Product search/filter/sort + pagination
 - Framer Motion hero/cards transitions
 - Skeleton loaders + toasts + responsive cart drawer
@@ -45,7 +46,7 @@ Production-ready Next.js 14+ ecommerce website for **Madonna Link Express Ventur
 - Server-side initialize
 - Redirect to Paystack
 - Server-side verify endpoint
-- Order creation **only after successful verification**
+- Pending order creation before redirect, then server-side verification to confirm payment
 - Duplicate-reference protection
 
 ### Security
@@ -167,4 +168,3 @@ Add event hooks for:
 - View product
 - Add to cart
 - Purchase complete
-

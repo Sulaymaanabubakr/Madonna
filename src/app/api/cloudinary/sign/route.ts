@@ -1,7 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { requireAdmin } from "@/server/auth";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  try {
+    await requireAdmin(req);
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error).message }, { status: 403 });
+  }
+
   if (
     !process.env.CLOUDINARY_API_SECRET ||
     !process.env.CLOUDINARY_CLOUD_NAME ||

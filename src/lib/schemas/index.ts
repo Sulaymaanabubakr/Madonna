@@ -47,10 +47,11 @@ export const checkoutSchema = z.object({
   items: z.array(
     z.object({
       productId: z.string(),
+      productSlug: z.string().optional(),
       name: z.string(),
       price: z.number(),
       qty: z.number().int().positive(),
-      imageUrl: z.string().url(),
+      imageUrl: z.string().min(1),
       stockQty: z.number().int().nonnegative(),
     }),
   ),
