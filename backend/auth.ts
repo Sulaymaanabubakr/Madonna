@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { adminAuth, adminDb } from "../src/lib/firebase/admin";
 
 export async function verifyTokenFromRequest(req: Request) {
   const authHeader = req.headers.authorization || "";

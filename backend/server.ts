@@ -2,12 +2,12 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { randomUUID } from "node:crypto";
-import { adminDb } from "@/lib/firebase/admin";
-import { sendOrderEmail } from "@/lib/email";
-import { serializeProduct } from "@/lib/product-serialization";
-import { checkoutSchema } from "@/lib/schemas";
-import { defaultStoreSettings, serializeStoreSettings } from "@/lib/settings-serialization";
-import type { CartItem, Order } from "@/types";
+import { adminDb } from "../src/lib/firebase/admin";
+import { sendOrderEmail } from "../src/lib/email";
+import { serializeProduct } from "../src/lib/product-serialization";
+import { checkoutSchema } from "../src/lib/schemas";
+import { defaultStoreSettings, serializeStoreSettings } from "../src/lib/settings-serialization";
+import type { CartItem, Order } from "../src/types";
 import { getUserFromRequest, requireAdmin, verifyTokenFromRequest } from "./auth";
 
 const app = express();
@@ -628,6 +628,10 @@ app.get("/api/admin/products", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`API server running on http://localhost:${PORT}`);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(PORT, () => {
+    console.log(`API server running on http://localhost:${PORT}`);
+  });
+}
+
+export default app;
