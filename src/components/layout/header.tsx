@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Menu, Search, ShoppingBag, User2, X, Heart } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BUSINESS } from "@/lib/constants";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useCart } from "@/components/providers/cart-provider";
@@ -22,42 +21,68 @@ const navItems = [
     { name: "CONTACT", href: "/contact" },
 ];
 
+type PublicHeaderSettings = {
+    storeName: string;
+    phone: string;
+    announcementEnabled: boolean;
+    announcementText: string;
+    announcementSpeed: number;
+};
+
 export function Header() {
     const { user, profile, logout } = useAuth();
     const { count, subtotal } = useCart();
     const [query, setQuery] = useState("");
     const [searchOpen, setSearchOpen] = useState(false);
-    const router = useRouter();
-    const [mounted, setMounted] = useState(false);
+    const [publicSettings, setPublicSettings] = useState<PublicHeaderSettings>({
+        storeName: BUSINESS.name,
+        phone: BUSINESS.phone,
+        announcementEnabled: false,
+        announcementText: "",
+        announcementSpeed: 22,
+    });
+    const navigate = useNavigate();
+    const storeName = (publicSettings.storeName || BUSINESS.name).trim();
+    const storeNameWords = storeName.split(/\s+/);
+    const mobileLastWord = storeNameWords.length > 1 ? storeNameWords[storeNameWords.length - 1] : storeName;
+    const mobileLeadingWords = storeNameWords.length > 1 ? storeNameWords.slice(0, -1).join(" ") : "";
 
     useEffect(() => {
-        setMounted(true);
+        const loadPublicSettings = async () => {
+            try {
+                const res = await fetch("/api/settings/public");
+                const data = await res.json();
+                if (!data?.item) return;
+                setPublicSettings((prev) => ({ ...prev, ...data.item }));
+            } catch {
+                // Keep defaults from constants if loading fails.
+            }
+        };
+        loadPublicSettings();
     }, []);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         if (query.trim()) {
-            router.push(`/shop?q=${encodeURIComponent(query)}`);
+            navigate(`/shop?q=${encodeURIComponent(query)}`);
             setSearchOpen(false);
         }
     };
-
-    if (!mounted) return <header className="h-[104px] border-b" />;
 
     return (
         <header className="sticky top-0 z-50 w-full transition-all">
             {/* ── Madonna Maroon Top utility bar ── */}
             <div className="bg-[#8B2030] text-white">
-                <div className="container mx-auto flex h-10 items-center justify-between px-4 text-[11px] font-semibold tracking-wider">
-                    <div className="flex items-center">
+                <div className="container mx-auto flex h-10 items-center justify-center px-4 text-[11px] font-semibold tracking-wider md:justify-between">
+                    <div className="flex w-full items-center justify-center md:w-auto md:justify-start">
                         <span className="uppercase text-white/90">
-                            CALL US: <a href={`tel:${BUSINESS.phone}`} className="font-bold text-white hover:underline">{BUSINESS.phone}</a>
+                            CALL US: <a href={`tel:${publicSettings.phone || BUSINESS.phone}`} className="font-bold text-white hover:underline">{publicSettings.phone || BUSINESS.phone}</a>
                         </span>
                     </div>
                     <div className="hidden items-center gap-6 uppercase md:flex">
-                        <Link href="/track" className="hover:text-white/80 transition-colors">Track Order</Link>
-                        <Link href="/about" className="hover:text-white/80 transition-colors">About</Link>
-                        <Link href="/contact" className="hover:text-white/80 transition-colors">Contact</Link>
+                        <Link to="/track" className="hover:text-white/80 transition-colors">Track Order</Link>
+                        <Link to="/about" className="hover:text-white/80 transition-colors">About</Link>
+                        <Link to="/contact" className="hover:text-white/80 transition-colors">Contact</Link>
                         <span className="text-white/40">|</span>
                         <span className="cursor-pointer hover:text-white/80 transition-colors">USD ▾</span>
                         <span className="cursor-pointer hover:text-white/80 transition-colors">ENG ▾</span>
@@ -65,35 +90,57 @@ export function Header() {
                 </div>
             </div>
 
+            {publicSettings.announcementEnabled && publicSettings.announcementText?.trim() ? (
+                <div className="ticker-wrap bg-zinc-900 text-white">
+                    <div
+                        className="ticker-line"
+                        style={
+                            {
+                                animationDuration: `${publicSettings.announcementSpeed || 22}s`,
+                            } as React.CSSProperties
+                        }
+                    >
+                        <span>{publicSettings.announcementText}</span>
+                    </div>
+                </div>
+            ) : null}
+
             {/* ── Main White Header ── */}
             <div className="border-b bg-white shadow-sm">
-                <div className="container mx-auto flex h-[80px] items-center justify-between px-4">
+                <div className="container relative mx-auto flex h-[64px] items-center justify-between px-4 sm:h-[72px] lg:h-[80px]">
+                    {/* Mobile Left: Account + Cart */}
+                    <div className="absolute left-4 flex items-center gap-1 md:hidden">
+                        {user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="rounded-none hover:bg-zinc-100">
+                                        <User2 className="h-5 w-5 text-zinc-800" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="start" className="rounded-none border-zinc-200 shadow-xl">
+                                    <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/account">My Account</Link></DropdownMenuItem>
+                                    {profile?.role === "admin" && <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
+                                    <DropdownMenuItem className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100" onClick={() => logout()}>Logout</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Button asChild variant="ghost" size="icon" className="rounded-none hover:bg-zinc-100">
+                                <Link to="/account" aria-label="Go to sign in">
+                                    <User2 className="h-5 w-5 text-zinc-800" />
+                                </Link>
+                            </Button>
+                        )}
 
-                    {/* Mobile menu trigger */}
-                    <div className="flex items-center md:hidden">
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-none hover:bg-zinc-100">
-                                    <Menu className="h-6 w-6 text-zinc-800" />
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="left" className="w-[85%] max-w-sm rounded-none border-none p-0">
-                                <div className="bg-[#8B2030] p-4 text-white">
-                                    <span className="text-lg font-bold uppercase tracking-widest">Menu</span>
-                                </div>
-                                <nav className="flex flex-col p-4">
-                                    {navItems.map((item) => (
-                                        <Link
-                                            key={item.name}
-                                            href={item.href}
-                                            className="border-b border-zinc-100 py-4 text-xs font-bold uppercase tracking-widest text-zinc-800 hover:text-[#8B2030]"
-                                        >
-                                            {item.name}
-                                        </Link>
-                                    ))}
-                                </nav>
-                            </SheetContent>
-                        </Sheet>
+                        <CartDrawer>
+                            <Button variant="ghost" size="icon" className="relative rounded-none hover:bg-zinc-100">
+                                <ShoppingBag className="h-5 w-5 text-zinc-800" />
+                                {count >= 0 && (
+                                    <Badge className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#8B2030] px-1 text-[10px] font-bold leading-none text-white hover:bg-[#8B2030]">
+                                        {count}
+                                    </Badge>
+                                )}
+                            </Button>
+                        </CartDrawer>
                     </div>
 
                     {/* Desktop Nav (Left) */}
@@ -101,7 +148,7 @@ export function Header() {
                         {navItems.map((item) => (
                             <Link
                                 key={item.name}
-                                href={item.href}
+                                to={item.href}
                                 className="text-[12px] font-bold uppercase tracking-[0.1em] text-zinc-800 transition-colors hover:text-[#8B2030]"
                             >
                                 {item.name}
@@ -110,19 +157,24 @@ export function Header() {
                     </nav>
 
                     {/* Center Logo */}
-                    <div className="absolute left-1/2 top-[60px] -translate-x-1/2 -translate-y-1/2 lg:top-[64px]">
-                        <Link href="/" className="flex flex-col items-center">
-                            <span className="font-sans text-3xl font-black uppercase tracking-tighter text-zinc-900">
-                                MADONNA
-                            </span>
-                            <span className="text-[10px] font-medium tracking-[0.15em] text-zinc-500">
-                                LINK EXPRESS
+                    <div className="absolute left-1/2 flex -translate-x-1/2 items-center justify-center lg:static lg:translate-x-0">
+                        <Link to="/" className="flex flex-col items-center">
+                            <span className="block text-center font-sans text-base font-black uppercase leading-tight tracking-tight text-zinc-900 sm:text-2xl lg:text-3xl">
+                                {mobileLeadingWords ? (
+                                    <>
+                                        <span className="sm:hidden">{mobileLeadingWords}</span>
+                                        <span className="block sm:hidden">{mobileLastWord}</span>
+                                        <span className="hidden sm:inline">{storeName}</span>
+                                    </>
+                                ) : (
+                                    storeName
+                                )}
                             </span>
                         </Link>
                     </div>
 
-                    {/* Right Icons */}
-                    <div className="flex items-center gap-2 lg:gap-4">
+                    {/* Desktop/Tablet Right Icons */}
+                    <div className="hidden items-center gap-2 md:flex lg:gap-4">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -132,24 +184,26 @@ export function Header() {
                             {searchOpen ? <X className="h-6 w-6 text-zinc-800" /> : <Search className="h-6 w-6 text-zinc-800" />}
                         </Button>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-none hover:bg-zinc-100">
+                        {user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="rounded-none hover:bg-zinc-100">
+                                        <User2 className="h-6 w-6 text-zinc-800" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="rounded-none border-zinc-200 shadow-xl">
+                                    <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/account">My Account</Link></DropdownMenuItem>
+                                    {profile?.role === "admin" && <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
+                                    <DropdownMenuItem className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100" onClick={() => logout()}>Logout</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <Button asChild variant="ghost" size="icon" className="rounded-none hover:bg-zinc-100">
+                                <Link to="/account" aria-label="Go to sign in">
                                     <User2 className="h-6 w-6 text-zinc-800" />
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="rounded-none border-zinc-200 shadow-xl">
-                                {user ? (
-                                    <>
-                                        <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link href="/account">My Account</Link></DropdownMenuItem>
-                                        {profile?.role === "admin" && <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link href="/admin">Admin Dashboard</Link></DropdownMenuItem>}
-                                        <DropdownMenuItem className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100" onClick={() => logout()}>Logout</DropdownMenuItem>
-                                    </>
-                                ) : (
-                                    <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link href="/account">Login / Register</Link></DropdownMenuItem>
-                                )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                </Link>
+                            </Button>
+                        )}
 
                         <Button variant="ghost" size="icon" className="hidden rounded-none hover:bg-zinc-100 sm:flex">
                             <Heart className="h-6 w-6 text-zinc-800" />
@@ -173,6 +227,46 @@ export function Header() {
                                 </Button>
                             </CartDrawer>
                         </div>
+                    </div>
+
+                    {/* Mobile Right: Search + Hamburger */}
+                    <div className="absolute right-4 flex items-center gap-1 md:hidden">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-none hover:bg-zinc-100"
+                            onClick={() => setSearchOpen(!searchOpen)}
+                        >
+                            {searchOpen ? <X className="h-5 w-5 text-zinc-800" /> : <Search className="h-5 w-5 text-zinc-800" />}
+                        </Button>
+
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="ghost" size="icon" className="rounded-none hover:bg-zinc-100">
+                                    <Menu className="h-5 w-5 text-zinc-800" />
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="left" className="w-[85%] max-w-sm rounded-none border-none p-0">
+                                <SheetTitle className="sr-only">Main navigation menu</SheetTitle>
+                                <SheetDescription className="sr-only">
+                                    Browse pages like Home, Shop, Products, and Contact.
+                                </SheetDescription>
+                                <div className="bg-[#8B2030] p-4 text-white">
+                                    <span className="text-lg font-bold uppercase tracking-widest">Menu</span>
+                                </div>
+                                <nav className="flex flex-col p-4">
+                                    {navItems.map((item) => (
+                                        <Link
+                                            key={item.name}
+                                            to={item.href}
+                                            className="border-b border-zinc-100 py-4 text-xs font-bold uppercase tracking-widest text-zinc-800 hover:text-[#8B2030]"
+                                        >
+                                            {item.name}
+                                        </Link>
+                                    ))}
+                                </nav>
+                            </SheetContent>
+                        </Sheet>
                     </div>
                 </div>
 

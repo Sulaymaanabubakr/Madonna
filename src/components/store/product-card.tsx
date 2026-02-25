@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Star, ShoppingBag, Eye } from "lucide-react";
 import type { Product } from "@/types";
 import { useCart } from "@/components/providers/cart-provider";
@@ -41,13 +40,11 @@ export function ProductCard({ product }: ProductCardProps) {
     return (
         <div className="group relative text-center">
             {/* ── Image Wrapper (`#F4F4F4` background, no borders) ── */}
-            <Link href={`/product/${product.slug}`} className="relative block aspect-[3/4] overflow-hidden bg-[#F4F4F4]">
-                <Image
+            <Link to={`/product/${product.slug}`} className="relative block aspect-[3/4] overflow-hidden bg-[#F4F4F4]">
+                <img
                     src={product.images[0]?.url || "/placeholder.svg"}
                     alt={product.name}
-                    fill
-                    sizes="(max-width: 640px) 50vw, 25vw"
-                    className="object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                    className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
                 />
 
                 {/* ── Badges ── */}
@@ -106,7 +103,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 </p>
 
                 {/* Title */}
-                <Link href={`/product/${product.slug}`} className="mt-1 max-w-full truncate text-[13px] font-semibold text-zinc-800 transition-colors hover:text-[#8B2030]">
+                <Link to={`/product/${product.slug}`} className="mt-1 max-w-full truncate text-[13px] font-semibold text-zinc-800 transition-colors hover:text-[#8B2030]">
                     {product.name}
                 </Link>
 

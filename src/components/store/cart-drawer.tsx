@@ -1,9 +1,8 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/providers/cart-provider";
 import { formatCurrency } from "@/lib/query";
@@ -18,6 +17,9 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent className="flex w-full flex-col p-0 sm:max-w-md rounded-none border-l border-zinc-200">
                 <SheetHeader className="border-b bg-zinc-50 p-6">
+                    <SheetDescription className="sr-only">
+                        Review selected items, adjust quantities, and proceed to checkout.
+                    </SheetDescription>
                     <div className="flex items-center justify-between">
                         <SheetTitle className="font-serif text-xl font-bold uppercase tracking-widest text-[#8B2030]">
                             Shopping Cart
@@ -51,16 +53,15 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
                             {items.map((item) => (
                                 <div key={item.productId} className="flex gap-4">
                                     <div className="relative h-24 w-20 shrink-0 bg-[#F4F4F4]">
-                                        <Image
+                                        <img
                                             src={item.imageUrl}
                                             alt={item.name}
-                                            fill
-                                            className="object-cover"
+                                            className="absolute inset-0 h-full w-full object-cover"
                                         />
                                     </div>
                                     <div className="flex flex-1 flex-col justify-between">
                                         <div className="flex items-start justify-between gap-2">
-                                            <Link href={item.productSlug ? `/product/${item.productSlug}` : "/shop"} className="text-[13px] font-semibold text-zinc-800 hover:text-[#8B2030]">
+                                            <Link to={item.productSlug ? `/product/${item.productSlug}` : "/shop"} className="text-[13px] font-semibold text-zinc-800 hover:text-[#8B2030]">
                                                 {item.name}
                                             </Link>
                                             <button onClick={() => removeItem(item.productId)} className="text-zinc-400 hover:text-red-600 transition-colors">
@@ -106,14 +107,14 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className="grid gap-3">
                             <SheetClose asChild>
-                                <Link href="/checkout">
+                                <Link to="/checkout">
                                     <Button variant="outline" className="w-full rounded-none border-zinc-300 text-xs font-bold uppercase tracking-widest text-zinc-900 hover:bg-zinc-100">
                                         View Checkout
                                     </Button>
                                 </Link>
                             </SheetClose>
                             <SheetClose asChild>
-                                <Link href="/checkout">
+                                <Link to="/checkout">
                                     <Button className="w-full rounded-none bg-[#8B2030] text-xs font-bold uppercase tracking-widest text-white hover:bg-[#721a27]">
                                         Checkout
                                     </Button>

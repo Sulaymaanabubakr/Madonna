@@ -1,18 +1,10 @@
 "use client";
 
 import {
-  GoogleAuthProvider,
   User,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  updateProfile,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { auth, db, isFirebaseConfigured } from "@/lib/firebase/client";
+import { getAuthClient, isFirebaseConfigured } from "@/lib/firebase/client";
 import type { UserProfile } from "@/types";
 
 type AuthContextType = {
@@ -35,76 +27,105 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isFirebaseConfigured || !auth || !db) {
+    if (!isFirebaseConfigured) {
       setLoading(false);
       return;
     }
 
-    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
+    let unsub: (() => void) | undefined;
+    let cancelled = false;
 
-      if (firebaseUser) {
-        const profileRef = doc(db, "users", firebaseUser.uid);
-        const snap = await getDoc(profileRef);
-
-        if (!snap.exists()) {
-          const payload = {
-            uid: firebaseUser.uid,
-            name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Customer",
-            email: firebaseUser.email || "",
-            role: "customer",
-            createdAt: new Date().toISOString(),
-            createdAtServer: serverTimestamp(),
-          };
-          await setDoc(profileRef, payload, { merge: true });
-          setProfile(payload as UserProfile);
-        } else {
-          setProfile(snap.data() as UserProfile);
-        }
-      } else {
-        setProfile(null);
+    const init = async () => {
+      const auth = await getAuthClient();
+      if (!auth) {
+        if (!cancelled) setLoading(false);
+        return;
       }
 
-      setLoading(false);
-    });
+      const { onAuthStateChanged } = await import("firebase/auth");
 
-    return () => unsub();
+      unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (cancelled) return;
+        setUser(firebaseUser);
+
+        if (firebaseUser) {
+          try {
+            const token = await firebaseUser.getIdToken();
+            const res = await fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } });
+            const data = await res.json();
+            if (data?.profile) {
+              setProfile(data.profile as UserProfile);
+            } else {
+              setProfile({
+                uid: firebaseUser.uid,
+                name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Customer",
+                email: firebaseUser.email || "",
+                role: "customer",
+                createdAt: new Date().toISOString(),
+              });
+            }
+          } catch {
+            setProfile({
+              uid: firebaseUser.uid,
+              name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Customer",
+              email: firebaseUser.email || "",
+              role: "customer",
+              createdAt: new Date().toISOString(),
+            });
+          }
+        } else {
+          setProfile(null);
+        }
+
+        setLoading(false);
+      });
+    };
+
+    init().catch(() => setLoading(false));
+
+    return () => {
+      cancelled = true;
+      if (unsub) unsub();
+    };
   }, []);
 
   const register = async (name: string, email: string, password: string) => {
-    if (!auth || !db) throw new Error("Firebase Auth is not configured");
+    const auth = await getAuthClient();
+    if (!auth) throw new Error("Firebase Auth is not configured");
+    const { createUserWithEmailAndPassword, updateProfile } = await import("firebase/auth");
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
-    await setDoc(
-      doc(db, "users", cred.user.uid),
-      {
-        uid: cred.user.uid,
-        name,
-        email,
-        role: "customer",
-        createdAt: new Date().toISOString(),
-        createdAtServer: serverTimestamp(),
-      },
-      { merge: true },
-    );
+    const token = await cred.user.getIdToken();
+    await fetch("/api/users/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name, email }),
+    });
   };
 
   const login = async (email: string, password: string) => {
+    const auth = await getAuthClient();
     if (!auth) throw new Error("Firebase Auth is not configured");
+    const { signInWithEmailAndPassword } = await import("firebase/auth");
     await signInWithEmailAndPassword(auth, email, password);
   };
 
   const loginWithGoogle = async () => {
+    const auth = await getAuthClient();
     if (!auth) throw new Error("Firebase Auth is not configured");
+    const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
     await signInWithPopup(auth, new GoogleAuthProvider());
   };
 
   const logout = async () => {
+    const auth = await getAuthClient();
     if (!auth) return;
+    const { signOut } = await import("firebase/auth");
     await signOut(auth);
   };
 
   const getToken = async () => {
+    const auth = await getAuthClient();
     if (!auth) return null;
     if (!auth.currentUser) return null;
     return auth.currentUser.getIdToken();

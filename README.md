@@ -1,6 +1,6 @@
-# Madonna Link Express Ventures - Premium E-commerce Platform
+# Madonna Shopping Arena - Premium E-commerce Platform
 
-Production-ready Next.js 14+ ecommerce website for **Madonna Link Express Ventures** (Madonna Shopping Arena, Lagos, Nigeria) with store + admin CMS in one project.
+Production-ready Next.js 14+ ecommerce website for **Madonna Shopping Arena** (Lagos, Nigeria) with store + admin CMS in one project.
 
 ## Stack
 
@@ -16,7 +16,7 @@ Production-ready Next.js 14+ ecommerce website for **Madonna Link Express Ventur
 
 ## Business Details
 
-- **Business Name**: Madonna Link Express Ventures
+- **Business Name**: Madonna Shopping Arena
 - **Store / Landmark**: Madonna Shopping Arena
 - **Address**: 21/22 Akinosho Street, Off Afariogun, Along Airport Road, Oshodi, Lagos, Nigeria
 - **Phone**: 07063006033

@@ -1,17 +1,8 @@
 "use client";
 
-import {
-  doc,
-  onSnapshot,
-  serverTimestamp,
-  setDoc,
-  Unsubscribe,
-} from "firebase/firestore";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { db } from "@/lib/firebase/client";
 import type { CartItem } from "@/types";
-import { useAuth } from "./auth-provider";
 
 const CART_KEY = "madonna-cart-v1";
 
@@ -28,7 +19,6 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | null>(null);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
   const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
@@ -40,35 +30,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(CART_KEY, JSON.stringify(items));
   }, [items]);
 
-  useEffect(() => {
-    let unsub: Unsubscribe | undefined;
-
-    if (user && db) {
-      const cartRef = doc(db, "carts", user.uid);
-      unsub = onSnapshot(cartRef, (snap) => {
-        const remoteItems = (snap.data()?.items as CartItem[] | undefined) || [];
-        if (remoteItems.length) setItems(remoteItems);
-      });
-
-      setDoc(cartRef, { uid: user.uid, items, updatedAt: serverTimestamp() }, { merge: true }).catch(
-        () => undefined,
-      );
-    }
-
-    return () => {
-      if (unsub) unsub();
-    };
-  }, [user]);
-
   const sync = (nextItems: CartItem[]) => {
     setItems(nextItems);
-    if (user && db) {
-      setDoc(
-        doc(db, "carts", user.uid),
-        { uid: user.uid, items: nextItems, updatedAt: serverTimestamp() },
-        { merge: true },
-      ).catch(() => undefined);
-    }
   };
 
   const addItem = (item: CartItem) => {

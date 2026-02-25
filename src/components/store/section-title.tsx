@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 interface SectionTitleProps {
     title: string;
@@ -21,7 +21,7 @@ export function SectionTitle({ title, subtitle, viewAllHref, align = "center" }:
                 </h2>
                 {viewAllHref && align === "left" && (
                     <Link
-                        href={viewAllHref}
+                        to={viewAllHref}
                         className="text-[11px] font-bold uppercase tracking-widest text-zinc-500 transition-colors hover:text-[#8B2030]"
                     >
                         View All →
@@ -34,7 +34,7 @@ export function SectionTitle({ title, subtitle, viewAllHref, align = "center" }:
 
             {viewAllHref && align === "center" && (
                 <Link
-                    href={viewAllHref}
+                    to={viewAllHref}
                     className="mt-4 text-[11px] font-bold uppercase tracking-widest text-[#8B2030] hover:underline"
                 >
                     View All Products

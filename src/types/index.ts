@@ -109,5 +109,8 @@ export type StoreSettings = {
   email: string;
   whatsapp: string;
   deliveryFee: number;
+  announcementEnabled: boolean;
+  announcementText: string;
+  announcementSpeed: number;
   updatedAt: string;
 };
