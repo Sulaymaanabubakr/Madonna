@@ -14,10 +14,13 @@ const app = express();
 const PORT = Number(process.env.PORT || 3001);
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || "";
 
-const allowedOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000")
-  .split(",")
-  .map((v) => v.trim())
-  .filter(Boolean);
+const allowedOrigins = [
+  ...(process.env.CORS_ORIGINS || "http://localhost:3000")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean),
+  ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+];
 
 app.use(
   cors({
