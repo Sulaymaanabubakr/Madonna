@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { getDbClient } from "@/lib/firebase/client";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection } from "firebase/firestore";
 import { useAuth } from "@/components/providers/auth-provider";
 import type { Product, ProductImage } from "@/types";
 

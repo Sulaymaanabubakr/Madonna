@@ -22,9 +22,10 @@ const NAV_ITEMS = [
 
 interface AdminSidebarProps {
     className?: string;
+    onNavigate?: () => void;
 }
 
-export function AdminSidebar({ className }: AdminSidebarProps) {
+export function AdminSidebar({ className, onNavigate }: AdminSidebarProps) {
     const location = useLocation();
 
     return (
@@ -43,6 +44,7 @@ export function AdminSidebar({ className }: AdminSidebarProps) {
                             <Link
                                 key={item.href}
                                 to={item.href}
+                                onClick={onNavigate}
                                 className={cn(
                                     "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
                                     isActive && "bg-muted text-primary",

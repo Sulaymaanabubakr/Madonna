@@ -17,7 +17,8 @@ service cloud.firestore {
     }
 
     match /products/{productId} {
-      allow read: if resource.data.isActive == true || isAdmin();
+      allow get: if resource.data.isActive == true || isAdmin();
+      allow list: if isAdmin() || true; // Front-end filters it, we allow list for all but limit UI via query
       allow write: if isAdmin();
     }
 

@@ -19,6 +19,7 @@ const defaultSettings: StoreSettings = {
   announcementEnabled: false,
   announcementText: "",
   announcementSpeed: 20,
+  updatedAt: "",
 };
 
 export function AdminSettingsPage() {

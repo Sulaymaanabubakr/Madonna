@@ -38,6 +38,7 @@ export async function fetchProducts(filters: ProductFilters = {}): Promise<Produ
 
     const { collection, getDocs, query, where } = await import("firebase/firestore");
 
+    // The seed script uses boolean `true`, not string `"true"`.
     const q_fs = query(collection(db, "products"), where("isActive", "==", true));
     const snapshot = await getDocs(q_fs);
 
@@ -181,7 +182,7 @@ export async function fetchOrderById(
             query(collection(db, "orders", orderId, "statusEvents"), orderBy("createdAt", "asc")),
         );
         const events = eventsSnap.docs.map(
-            (e) => ({ id: e.id, ...(e.data() as Record<string, unknown>) } as StatusEvent),
+            (e) => ({ id: e.id, ...(e.data() as Record<string, unknown>) } as unknown as StatusEvent),
         );
 
         return { order, events };

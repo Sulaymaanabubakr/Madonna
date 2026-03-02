@@ -1,3 +1,6 @@
+import { config } from "dotenv";
+config();
+
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
@@ -8,6 +11,8 @@ import { checkoutSchema } from "../src/lib/schemas";
 import type { CartItem, Order } from "../src/types";
 import { getUserFromRequest, requireAdmin } from "./auth";
 import cloudinary from "../src/lib/cloudinary";
+import { serializeProduct } from "../src/lib/product-serialization";
+import { serializeStoreSettings, defaultStoreSettings } from "../src/lib/settings-serialization";
 
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
