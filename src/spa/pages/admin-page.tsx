@@ -7,7 +7,7 @@ export function AdminPage() {
   const { loading, user, profile } = useAuth();
 
   if (loading) return <div className="container py-10">Loading...</div>;
-  if (!user) return <Navigate to="/account" replace />;
+  if (!user) return <Navigate to="/admin/login" replace />;
   if (profile?.role !== "admin") {
     return (
       <div className="container py-12">

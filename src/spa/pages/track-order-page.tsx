@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { formatCurrency } from "@/lib/query";
 import { Package, Truck, CheckCircle2, ChevronRight, Clock } from "lucide-react";
 import { useAuth } from "@/components/providers/auth-provider";
+import { fetchOrderById } from "@/lib/firestore";
 import type { Order, StatusEvent } from "@/types";
 
 export function TrackOrderPage() {
@@ -12,7 +13,7 @@ export function TrackOrderPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { orderId } = useParams();
-  const { user, loading: authLoading, getToken } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (authLoading) return;
@@ -23,19 +24,17 @@ export function TrackOrderPage() {
 
     const run = async () => {
       try {
-        const token = await getToken();
-        if (!token || !orderId) {
-          setError("Unauthorized");
+        if (!orderId) {
+          setError("Order ID missing");
           return;
         }
 
-        const res = await fetch(`/api/orders/id/${orderId}`, { headers: { Authorization: `Bearer ${token}` } });
-        const data = await res.json();
-        if (!res.ok || data.error) {
-          setError(data.error || "Failed to load order");
+        const result = await fetchOrderById(orderId);
+        if (!result) {
+          setError("Order not found");
         } else {
-          setOrder(data.order);
-          setEvents(data.events || []);
+          setOrder(result.order);
+          setEvents(result.events);
         }
       } catch (err) {
         setError((err as Error).message);
@@ -45,7 +44,7 @@ export function TrackOrderPage() {
     };
 
     run();
-  }, [authLoading, getToken, navigate, orderId, user]);
+  }, [authLoading, navigate, orderId, user]);
 
   if (loading) return <div className="flex min-h-[50vh] items-center justify-center">Loading timeline...</div>;
   if (error || !order) return <div className="flex min-h-[50vh] items-center justify-center bg-[#F4F4F4]"><div className="border border-zinc-200 bg-white p-12 text-center text-red-600">Failed to load order: {error || "Not found"}</div></div>;

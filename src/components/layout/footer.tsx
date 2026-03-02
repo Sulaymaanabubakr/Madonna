@@ -2,7 +2,17 @@ export function Footer() {
     return (
         <footer className="mt-12 bg-[#8B2030] text-white">
             {/* ── Footer Top Grid ── */}
-            <div className="container mx-auto grid max-w-[1240px] gap-8 px-4 py-16 text-center sm:grid-cols-2 sm:text-left lg:grid-cols-3">
+            <div className="container mx-auto grid max-w-[1240px] gap-8 px-4 py-16 text-center sm:text-left lg:grid-cols-4">
+                {/* Column 1: Logo & About */}
+                <div className="flex flex-col items-center sm:items-start">
+                    <a href="/" className="mb-6 flex items-center gap-3">
+                        <img src="/logo.png" alt="Madonna" className="h-12 w-auto flex-shrink-0 rounded-xl object-contain" />
+                        <span className="text-xl font-black uppercase tracking-tight text-white">Madonna</span>
+                    </a>
+                    <p className="text-sm leading-relaxed text-zinc-300">
+                        Your premium destination for exclusive retail. Curated collections for the modern lifestyle.
+                    </p>
+                </div>
 
                 {/* Column 4: Social & Payment */}
                 <div className="flex flex-col items-center sm:items-start">

@@ -1,4 +1,4 @@
-"use client";
+
 
 import { Link } from "react-router-dom";
 import { useState } from "react";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SectionTitle } from "@/components/store/section-title";
 import { ProductCard } from "@/components/store/product-card";
+import { subscribeNewsletter } from "@/lib/firestore";
 import type { Product } from "@/types";
 
 const categories = [
@@ -28,13 +29,7 @@ export function HomePageClient({
   const submitNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await fetch("/api/newsletter", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: newsletterEmail }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Subscription failed");
+      await subscribeNewsletter(newsletterEmail);
       setNewsletterEmail("");
       toast.success("You are now subscribed.");
     } catch (err) {

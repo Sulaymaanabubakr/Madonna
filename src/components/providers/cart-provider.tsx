@@ -1,4 +1,4 @@
-"use client";
+
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -22,8 +22,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    const raw = localStorage.getItem(CART_KEY);
-    if (raw) setItems(JSON.parse(raw) as CartItem[]);
+    try {
+      const raw = localStorage.getItem(CART_KEY);
+      if (raw) setItems(JSON.parse(raw) as CartItem[]);
+    } catch {
+      // Corrupted storage — start with an empty cart
+      localStorage.removeItem(CART_KEY);
+    }
   }, []);
 
   useEffect(() => {

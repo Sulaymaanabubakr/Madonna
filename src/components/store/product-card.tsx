@@ -1,9 +1,10 @@
-"use client";
+
 
 import { Link } from "react-router-dom";
-import { Star, ShoppingBag, Eye } from "lucide-react";
+import { Heart, ShoppingBag } from "lucide-react";
 import type { Product } from "@/types";
 import { useCart } from "@/components/providers/cart-provider";
+import { useWishlist } from "@/components/providers/wishlist-provider";
 import { formatCurrency } from "@/lib/query";
 import { toast } from "sonner";
 
@@ -13,6 +14,9 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
     const { addItem } = useCart();
+    const { isInWishlist, toggle } = useWishlist();
+    const wishlisted = isInWishlist(product.id);
+    const outOfStock = product.stockQty < 1;
 
     const hasDiscount = product.compareAtPrice && product.compareAtPrice > product.price;
     const discountPct = hasDiscount
@@ -40,7 +44,7 @@ export function ProductCard({ product }: ProductCardProps) {
     return (
         <div className="group relative text-center">
             {/* ── Image Wrapper (`#F4F4F4` background, no borders) ── */}
-            <Link to={`/product/${product.slug}`} className="relative block aspect-[3/4] overflow-hidden bg-[#F4F4F4]">
+            <Link to={`/product/${product.slug}`} className={`relative block aspect-[3/4] overflow-hidden bg-[#F4F4F4] ${outOfStock ? 'opacity-60' : ''}`}>
                 <img
                     src={product.images[0]?.url || "/placeholder.svg"}
                     alt={product.name}
@@ -49,7 +53,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
                 {/* ── Badges ── */}
                 <div className="absolute left-3 top-3 flex flex-col gap-1">
-                    {hasDiscount && (
+                    {outOfStock && (
+                        <span className="flex h-[22px] min-w-[40px] items-center justify-center bg-zinc-500 px-2 text-[10px] font-bold uppercase text-white shadow-sm">
+                            Sold Out
+                        </span>
+                    )}
+                    {hasDiscount && !outOfStock && (
                         <span className="flex h-[22px] min-w-[40px] items-center justify-center bg-[#E27C7C] px-2 text-[10px] font-bold uppercase text-white shadow-sm">
                             -{discountPct}%
                         </span>
@@ -65,6 +74,14 @@ export function ProductCard({ product }: ProductCardProps) {
                         </span>
                     )}
                 </div>
+
+                {/* ── Wishlist Heart ── */}
+                <button
+                    onClick={(e) => { e.preventDefault(); toggle(product.id); }}
+                    className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-all hover:bg-white hover:scale-110"
+                >
+                    <Heart className={`h-4 w-4 transition-colors ${wishlisted ? 'fill-[#8B2030] text-[#8B2030]' : 'text-zinc-400 hover:text-[#8B2030]'}`} />
+                </button>
 
                 {/* ── Hover Actions Overlay (Dark Add to Cart bar sliding up) ── */}
                 <div className="absolute inset-x-0 bottom-0 translate-y-full transition-transform duration-300 group-hover:translate-y-0">
@@ -84,15 +101,7 @@ export function ProductCard({ product }: ProductCardProps) {
                     </button>
                 </div>
 
-                {/* Optional Quick View button (desktop only) */}
-                <div className="absolute right-3 top-3 hidden opacity-0 transition-opacity duration-300 group-hover:opacity-100 lg:block">
-                    <button
-                        title="Quick View"
-                        className="flex h-10 w-10 items-center justify-center bg-white text-zinc-900 shadow-sm transition-colors hover:bg-[#8B2030] hover:text-white"
-                    >
-                        <Eye className="h-4 w-4" />
-                    </button>
-                </div>
+                {/* Optional Quick View button removed — no handler wired up */}
             </Link>
 
             {/* ── Product Info Below Image (Centered) ── */}
@@ -107,12 +116,6 @@ export function ProductCard({ product }: ProductCardProps) {
                     {product.name}
                 </Link>
 
-                {/* Stars */}
-                <div className="mt-1.5 flex items-center gap-[2px]">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`h-3 w-3 ${i < 4 ? "fill-zinc-800 text-zinc-800" : "fill-zinc-200 text-zinc-200"}`} />
-                    ))}
-                </div>
 
                 {/* Price */}
                 <div className="mt-2 flex items-center gap-2">

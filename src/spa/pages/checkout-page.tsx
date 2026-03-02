@@ -28,10 +28,22 @@ export function CheckoutPage() {
   const navigate = useNavigate();
   const { items, subtotal } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<CheckoutValues>({
+  const [serverTotal, setServerTotal] = useState<number | null>(null);
+  const { register, handleSubmit, formState: { errors }, setValue } = useForm<CheckoutValues>({
     resolver: zodResolver(checkoutSchema),
   });
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
+
+  // Pre-fill form from logged-in profile
+  useEffect(() => {
+    if (profile) {
+      const nameParts = (profile.name || "").split(" ");
+      setValue("firstName", nameParts[0] || "", { shouldValidate: false });
+      setValue("lastName", nameParts.slice(1).join(" ") || "", { shouldValidate: false });
+      setValue("email", profile.email || "", { shouldValidate: false });
+      if (profile.phone) setValue("phone", profile.phone, { shouldValidate: false });
+    }
+  }, [profile, setValue]);
 
   useEffect(() => {
     if (items.length === 0 && !isProcessing) {
@@ -68,6 +80,9 @@ export function CheckoutPage() {
       });
       const orderData = await orderRes.json();
       if (!orderData.success) throw new Error(orderData.error || "Failed to create order");
+
+      // Use the server-calculated total (includes delivery fee from store settings)
+      setServerTotal(orderData.amount);
 
       const paystackRes = await fetch("/api/paystack/initialize", {
         method: "POST",
@@ -175,7 +190,7 @@ export function CheckoutPage() {
                   <span>Subtotal</span><span className="text-[15px]">{formatCurrency(subtotal)}</span>
                 </div>
                 <div className="flex items-center justify-between py-4 text-xl font-bold uppercase tracking-widest text-zinc-900">
-                  <span>Total</span><span className="text-[#8B2030]">{formatCurrency(subtotal)}</span>
+                  <span>Total</span><span className="text-[#8B2030]">{formatCurrency(serverTotal ?? subtotal)}</span>
                 </div>
               </div>
               <Button type="submit" disabled={isProcessing} className="mt-6 h-14 w-full rounded-none bg-[#222222] text-[13px] font-bold uppercase tracking-[0.1em] text-white hover:bg-[#8B2030]">

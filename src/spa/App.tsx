@@ -1,5 +1,5 @@
 import { Suspense, lazy } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, Outlet } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 
@@ -20,9 +20,13 @@ const TrackOrderPage = lazy(() =>
   import("@/spa/pages/track-order-page").then((m) => ({ default: m.TrackOrderPage })),
 );
 const CategoryPage = lazy(() => import("@/spa/pages/category-page").then((m) => ({ default: m.CategoryPage })));
+const WishlistPage = lazy(() => import("@/spa/pages/wishlist-page").then((m) => ({ default: m.WishlistPage })));
 const AdminPage = lazy(() => import("@/spa/pages/admin-page").then((m) => ({ default: m.AdminPage })));
 const AdminSettingsPage = lazy(() =>
   import("@/spa/pages/admin-settings-page").then((m) => ({ default: m.AdminSettingsPage })),
+);
+const AdminLoginPage = lazy(() =>
+  import("@/spa/pages/admin-login-page").then((m) => ({ default: m.AdminLoginPage })),
 );
 
 function NotFound() {
@@ -31,29 +35,36 @@ function NotFound() {
 
 export function App() {
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans antialiased">
-      <Header />
-      <main className="flex-1">
-        <Suspense fallback={<div className="container mx-auto px-4 py-20 text-center text-zinc-500">Loading...</div>}>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/shop" element={<ShopPage />} />
-            <Route path="/product/:slug" element={<ProductPage />} />
-            <Route path="/account" element={<AccountPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/checkout/verify" element={<CheckoutVerifyPage />} />
-            <Route path="/track" element={<TrackLookupPage />} />
-            <Route path="/track/:orderId" element={<TrackOrderPage />} />
-            <Route path="/category/:slug" element={<CategoryPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-            <Route path="/admin/settings" element={<AdminSettingsPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </main>
-      <Footer />
-    </div>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-500">Loading...</div>}>
+      <Routes>
+        {/* Admin login — no header/footer */}
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+
+        {/* Public site — with header/footer */}
+        <Route element={
+          <div className="flex min-h-screen flex-col bg-background font-sans antialiased">
+            <Header />
+            <main className="flex-1"><Outlet /></main>
+            <Footer />
+          </div>
+        }>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/shop" element={<ShopPage />} />
+          <Route path="/product/:slug" element={<ProductPage />} />
+          <Route path="/account" element={<AccountPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/verify" element={<CheckoutVerifyPage />} />
+          <Route path="/track" element={<TrackLookupPage />} />
+          <Route path="/track/:orderId" element={<TrackOrderPage />} />
+          <Route path="/category/:slug" element={<CategoryPage />} />
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }

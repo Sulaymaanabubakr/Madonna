@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { HomePageClient } from "@/components/store/home-page-client";
+import { fetchProducts } from "@/lib/firestore";
 import type { Product } from "@/types";
 
 function sortByCreatedAtDesc(a: Product, b: Product) {
@@ -10,11 +11,8 @@ export function HomePage() {
   const [items, setItems] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetch("/api/products?page=1&pageSize=40")
-      .then((r) => r.json())
-      .then((data) => {
-        setItems((data.items as Product[]) || []);
-      })
+    fetchProducts({ page: 1, pageSize: 40 })
+      .then((data) => setItems(data.items))
       .catch(() => setItems([]));
   }, []);
 

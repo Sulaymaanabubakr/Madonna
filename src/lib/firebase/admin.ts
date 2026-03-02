@@ -4,14 +4,37 @@ import { getFirestore } from "firebase-admin/firestore";
 
 const projectId = process.env.FIREBASE_PROJECT_ID;
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || "";
+// Normalize the private key regardless of how Vercel encodes it:
+// 1. Strip surrounding quotes (if Vercel wraps the value in quotes)
+// 2. Replace literal \\n (double-escaped by some platforms) → \n
+// 3. Replace \n escape sequences → real newlines
+const privateKey = rawPrivateKey
+  .replace(/^"|"$/g, "")       // strip leading/trailing quotes
+  .replace(/\\\\n/g, "\n")    // double-escaped \\n → newline
+  .replace(/\\n/g, "\n");     // single-escaped \n → newline
 
 if (!getApps().length) {
   if (projectId && clientEmail && privateKey) {
-    initializeApp({
-      credential: cert({ projectId, clientEmail, privateKey }),
-    });
+    try {
+      initializeApp({
+        credential: cert({ projectId, clientEmail, privateKey }),
+      });
+    } catch (error) {
+      throw new Error(
+        `Firebase Admin initialization failed. Check FIREBASE_PRIVATE_KEY format. ${(error as Error).message}`,
+      );
+    }
   } else {
+    // Local dev fallback only; production should always use explicit service account env vars.
+    if (process.env.NODE_ENV === "production") {
+      const missing = [
+        !projectId ? "FIREBASE_PROJECT_ID" : "",
+        !clientEmail ? "FIREBASE_CLIENT_EMAIL" : "",
+        !privateKey ? "FIREBASE_PRIVATE_KEY" : "",
+      ].filter(Boolean);
+      throw new Error(`Missing Firebase Admin environment variables: ${missing.join(", ")}`);
+    }
     initializeApp({ credential: applicationDefault() });
   }
 }

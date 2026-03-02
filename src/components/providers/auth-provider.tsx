@@ -1,10 +1,11 @@
-"use client";
+
 
 import {
   User,
 } from "firebase/auth";
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getAuthClient, isFirebaseConfigured } from "@/lib/firebase/client";
+import { fetchUserProfile, saveUserProfile } from "@/lib/firestore";
 import type { UserProfile } from "@/types";
 
 type AuthContextType = {
@@ -49,30 +50,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(firebaseUser);
 
         if (firebaseUser) {
-          try {
-            const token = await firebaseUser.getIdToken();
-            const res = await fetch("/api/me", { headers: { Authorization: `Bearer ${token}` } });
-            const data = await res.json();
-            if (data?.profile) {
-              setProfile(data.profile as UserProfile);
-            } else {
-              setProfile({
-                uid: firebaseUser.uid,
-                name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Customer",
-                email: firebaseUser.email || "",
-                role: "customer",
-                createdAt: new Date().toISOString(),
-              });
-            }
-          } catch {
-            setProfile({
-              uid: firebaseUser.uid,
-              name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Customer",
-              email: firebaseUser.email || "",
-              role: "customer",
-              createdAt: new Date().toISOString(),
-            });
-          }
+          const fallback: UserProfile = {
+            uid: firebaseUser.uid,
+            name: firebaseUser.displayName || firebaseUser.email?.split("@")[0] || "Customer",
+            email: firebaseUser.email || "",
+            role: "customer",
+            createdAt: new Date().toISOString(),
+          };
+          const stored = await fetchUserProfile(firebaseUser.uid);
+          setProfile(stored ?? fallback);
         } else {
           setProfile(null);
         }
@@ -89,47 +75,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = useCallback(async (name: string, email: string, password: string) => {
     const auth = await getAuthClient();
     if (!auth) throw new Error("Firebase Auth is not configured");
     const { createUserWithEmailAndPassword, updateProfile } = await import("firebase/auth");
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
-    const token = await cred.user.getIdToken();
-    await fetch("/api/users/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name, email }),
-    });
-  };
+    await saveUserProfile(cred.user.uid, { name, email });
+  }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const auth = await getAuthClient();
     if (!auth) throw new Error("Firebase Auth is not configured");
     const { signInWithEmailAndPassword } = await import("firebase/auth");
     await signInWithEmailAndPassword(auth, email, password);
-  };
+  }, []);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = useCallback(async () => {
     const auth = await getAuthClient();
     if (!auth) throw new Error("Firebase Auth is not configured");
     const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
     await signInWithPopup(auth, new GoogleAuthProvider());
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     const auth = await getAuthClient();
     if (!auth) return;
     const { signOut } = await import("firebase/auth");
     await signOut(auth);
-  };
+  }, []);
 
-  const getToken = async () => {
+  const getToken = useCallback(async () => {
     const auth = await getAuthClient();
     if (!auth) return null;
     if (!auth.currentUser) return null;
     return auth.currentUser.getIdToken();
-  };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -143,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       logout,
       getToken,
     }),
-    [user, profile, loading],
+    [user, profile, loading, register, login, loginWithGoogle, logout, getToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

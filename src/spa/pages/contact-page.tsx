@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { BUSINESS } from "@/lib/constants";
+import { submitContactForm } from "@/lib/firestore";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -15,13 +16,7 @@ export function ContactPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) throw new Error(data.error || "Failed to send message");
+      await submitContactForm(form);
       setForm({ name: "", email: "", subject: "", message: "" });
       toast.success("Message sent. We will get back to you soon.");
     } catch (err) {

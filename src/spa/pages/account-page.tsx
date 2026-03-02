@@ -3,13 +3,14 @@ import { Link } from "react-router-dom";
 import { Copy, Package, Truck, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/providers/auth-provider";
+import { fetchMyOrders } from "@/lib/firestore";
 import { formatCurrency } from "@/lib/query";
 import type { Order } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export function AccountPage() {
-  const { user, profile, loading, login, register, logout, getToken } = useAuth();
+  const { user, profile, loading, login, register, logout } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoginView, setIsLoginView] = useState(true);
@@ -21,17 +22,11 @@ export function AccountPage() {
   useEffect(() => {
     if (user && profile?.role === "customer") {
       setIsLoadingOrders(true);
-      getToken().then((token) => {
-        if (!token) return;
-        fetch("/api/orders/me", { headers: { Authorization: `Bearer ${token}` } })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data.items) setOrders(data.items);
-          })
-          .finally(() => setIsLoadingOrders(false));
-      });
+      fetchMyOrders(user.uid)
+        .then((items) => setOrders(items))
+        .finally(() => setIsLoadingOrders(false));
     }
-  }, [user, profile, getToken]);
+  }, [user, profile]);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();

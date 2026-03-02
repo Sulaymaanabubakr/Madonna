@@ -1,14 +1,21 @@
-"use client";
+
 
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/providers/cart-provider";
+import { fetchPublicSettings } from "@/lib/firestore";
 import { formatCurrency } from "@/lib/query";
 
 export function CartDrawer({ children }: { children: React.ReactNode }) {
     const { items, setQty, removeItem, subtotal } = useCart();
+    const [deliveryFee, setDeliveryFee] = useState(0);
+
+    useEffect(() => {
+        fetchPublicSettings().then((s) => setDeliveryFee(s.deliveryFee ?? 0)).catch(() => { });
+    }, []);
 
     return (
         <Sheet>
@@ -101,9 +108,19 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
 
                 {items.length > 0 && (
                     <div className="border-t bg-zinc-50 p-6">
-                        <div className="mb-4 flex items-center justify-between">
+                        <div className="mb-2 flex items-center justify-between">
                             <span className="text-sm font-bold uppercase tracking-widest text-zinc-500">Subtotal</span>
-                            <span className="text-lg font-bold text-zinc-900">{formatCurrency(subtotal)}</span>
+                            <span className="text-sm font-bold text-zinc-900">{formatCurrency(subtotal)}</span>
+                        </div>
+                        {deliveryFee > 0 && (
+                            <div className="mb-2 flex items-center justify-between">
+                                <span className="text-sm font-bold uppercase tracking-widest text-zinc-500">Delivery</span>
+                                <span className="text-sm font-bold text-zinc-900">{formatCurrency(deliveryFee)}</span>
+                            </div>
+                        )}
+                        <div className="mb-4 flex items-center justify-between border-t border-zinc-200 pt-2">
+                            <span className="text-sm font-bold uppercase tracking-widest text-zinc-900">Est. Total</span>
+                            <span className="text-lg font-bold text-[#8B2030]">{formatCurrency(subtotal + deliveryFee)}</span>
                         </div>
                         <div className="grid gap-3">
                             <SheetClose asChild>

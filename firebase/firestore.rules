@@ -45,5 +45,21 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // Public can submit contact messages — name, email, message required.
+    match /contactMessages/{docId} {
+      allow create: if request.resource.data.keys().hasAll(["name", "email", "message"])
+                    && request.resource.data.name is string
+                    && request.resource.data.email is string
+                    && request.resource.data.message is string;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Public can subscribe to the newsletter.
+    match /newsletterSubscribers/{email} {
+      allow create, update: if request.resource.data.keys().hasAll(["email"])
+                             && request.resource.data.email is string;
+      allow read, delete: if isAdmin();
+    }
   }
 }

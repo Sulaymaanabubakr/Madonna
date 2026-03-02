@@ -1,4 +1,4 @@
-"use client";
+
 
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -8,8 +8,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { BUSINESS } from "@/lib/constants";
+import { fetchPublicSettings } from "@/lib/firestore";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useCart } from "@/components/providers/cart-provider";
+import { useWishlist } from "@/components/providers/wishlist-provider";
 import { Badge } from "@/components/ui/badge";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { formatCurrency } from "@/lib/query";
@@ -17,7 +19,6 @@ import { formatCurrency } from "@/lib/query";
 const navItems = [
     { name: "HOME", href: "/" },
     { name: "SHOP", href: "/shop" },
-    { name: "PRODUCTS", href: "/shop" },
     { name: "CONTACT", href: "/contact" },
 ];
 
@@ -32,6 +33,7 @@ type PublicHeaderSettings = {
 export function Header() {
     const { user, profile, logout } = useAuth();
     const { count, subtotal } = useCart();
+    const { count: wishlistCount } = useWishlist();
     const [query, setQuery] = useState("");
     const [searchOpen, setSearchOpen] = useState(false);
     const [publicSettings, setPublicSettings] = useState<PublicHeaderSettings>({
@@ -48,17 +50,11 @@ export function Header() {
     const mobileLeadingWords = storeNameWords.length > 1 ? storeNameWords.slice(0, -1).join(" ") : "";
 
     useEffect(() => {
-        const loadPublicSettings = async () => {
-            try {
-                const res = await fetch("/api/settings/public");
-                const data = await res.json();
-                if (!data?.item) return;
-                setPublicSettings((prev) => ({ ...prev, ...data.item }));
-            } catch {
-                // Keep defaults from constants if loading fails.
-            }
-        };
-        loadPublicSettings();
+        fetchPublicSettings().then((settings) => {
+            setPublicSettings((prev) => ({ ...prev, ...settings }));
+        }).catch(() => {
+            // Keep defaults from constants if loading fails.
+        });
     }, []);
 
     const handleSearch = (e: React.FormEvent) => {
@@ -83,9 +79,6 @@ export function Header() {
                         <Link to="/track" className="hover:text-white/80 transition-colors">Track Order</Link>
                         <Link to="/about" className="hover:text-white/80 transition-colors">About</Link>
                         <Link to="/contact" className="hover:text-white/80 transition-colors">Contact</Link>
-                        <span className="text-white/40">|</span>
-                        <span className="cursor-pointer hover:text-white/80 transition-colors">USD ▾</span>
-                        <span className="cursor-pointer hover:text-white/80 transition-colors">ENG ▾</span>
                     </div>
                 </div>
             </div>
@@ -119,7 +112,6 @@ export function Header() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start" className="rounded-none border-zinc-200 shadow-xl">
                                     <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/account">My Account</Link></DropdownMenuItem>
-                                    {profile?.role === "admin" && <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
                                     <DropdownMenuItem className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100" onClick={() => logout()}>Logout</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -134,7 +126,7 @@ export function Header() {
                         <CartDrawer>
                             <Button variant="ghost" size="icon" className="relative rounded-none hover:bg-zinc-100">
                                 <ShoppingBag className="h-5 w-5 text-zinc-800" />
-                                {count >= 0 && (
+                                {count > 0 && (
                                     <Badge className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#8B2030] px-1 text-[10px] font-bold leading-none text-white hover:bg-[#8B2030]">
                                         {count}
                                     </Badge>
@@ -157,9 +149,14 @@ export function Header() {
                     </nav>
 
                     {/* Center Logo */}
-                    <div className="absolute left-1/2 flex -translate-x-1/2 items-center justify-center lg:static lg:translate-x-0">
-                        <Link to="/" className="flex flex-col items-center">
-                            <span className="block text-center font-sans text-base font-black uppercase leading-tight tracking-tight text-zinc-900 sm:text-2xl lg:text-3xl">
+                    <div className="absolute left-1/2 flex max-w-[50vw] -translate-x-1/2 items-center justify-center xl:static xl:translate-x-0 xl:max-w-none">
+                        <Link to="/" className="flex items-center justify-center gap-2 sm:gap-3">
+                            <img
+                                src="/logo.png"
+                                alt="Logo"
+                                className="h-8 w-auto flex-shrink-0 rounded-xl object-contain sm:h-10 lg:h-12"
+                            />
+                            <span className="block truncate text-center font-sans text-sm font-black uppercase leading-tight tracking-tight text-zinc-900 sm:text-2xl lg:text-3xl">
                                 {mobileLeadingWords ? (
                                     <>
                                         <span className="sm:hidden">{mobileLeadingWords}</span>
@@ -184,6 +181,17 @@ export function Header() {
                             {searchOpen ? <X className="h-6 w-6 text-zinc-800" /> : <Search className="h-6 w-6 text-zinc-800" />}
                         </Button>
 
+                        <Button asChild variant="ghost" size="icon" className="relative rounded-none hover:bg-zinc-100">
+                            <Link to="/wishlist" aria-label="Wishlist">
+                                <Heart className="h-6 w-6 text-zinc-800" />
+                                {wishlistCount > 0 && (
+                                    <Badge className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#8B2030] px-1 text-[10px] font-bold leading-none text-white hover:bg-[#8B2030]">
+                                        {wishlistCount}
+                                    </Badge>
+                                )}
+                            </Link>
+                        </Button>
+
                         {user ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -193,7 +201,6 @@ export function Header() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="rounded-none border-zinc-200 shadow-xl">
                                     <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/account">My Account</Link></DropdownMenuItem>
-                                    {profile?.role === "admin" && <DropdownMenuItem asChild className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100"><Link to="/admin">Admin Dashboard</Link></DropdownMenuItem>}
                                     <DropdownMenuItem className="cursor-pointer text-xs font-semibold uppercase hover:bg-zinc-100" onClick={() => logout()}>Logout</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -205,10 +212,6 @@ export function Header() {
                             </Button>
                         )}
 
-                        <Button variant="ghost" size="icon" className="hidden rounded-none hover:bg-zinc-100 sm:flex">
-                            <Heart className="h-6 w-6 text-zinc-800" />
-                        </Button>
-
                         <div className="ml-2 border-l border-zinc-200 py-2 pl-4">
                             <CartDrawer>
                                 <Button variant="ghost" className="relative flex items-center justify-between gap-2 overflow-hidden rounded-none px-2 hover:bg-zinc-100">
@@ -218,7 +221,7 @@ export function Header() {
                                     </div>
                                     <div className="relative">
                                         <ShoppingBag className="h-7 w-7 text-zinc-800" />
-                                        {count >= 0 && (
+                                        {count > 0 && (
                                             <Badge className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#8B2030] px-1 text-[10px] font-bold leading-none text-white hover:bg-[#8B2030]">
                                                 {count}
                                             </Badge>

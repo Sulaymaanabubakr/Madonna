@@ -4,11 +4,9 @@ import rateLimit from "express-rate-limit";
 import { randomUUID } from "node:crypto";
 import { adminDb } from "../src/lib/firebase/admin";
 import { sendOrderEmail } from "../src/lib/email";
-import { serializeProduct } from "../src/lib/product-serialization";
 import { checkoutSchema } from "../src/lib/schemas";
-import { defaultStoreSettings, serializeStoreSettings } from "../src/lib/settings-serialization";
 import type { CartItem, Order } from "../src/types";
-import { getUserFromRequest, requireAdmin, verifyTokenFromRequest } from "./auth";
+import { getUserFromRequest, requireAdmin } from "./auth";
 
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
@@ -22,11 +20,24 @@ const allowedOrigins = [
   ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
 ];
 
+// Returns true for any origin that is explicitly allowed or is a Vercel preview deployment.
+function isOriginAllowed(origin: string): boolean {
+  if (allowedOrigins.includes(origin)) return true;
+  // Allow all Vercel preview deployments (*.vercel.app)
+  try {
+    const { hostname } = new URL(origin);
+    if (hostname.endsWith(".vercel.app")) return true;
+  } catch {
+    // ignore malformed origins
+  }
+  return false;
+}
+
 app.use(
   cors({
     origin(origin, callback) {
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      if (isOriginAllowed(origin)) return callback(null, true);
       return callback(new Error("CORS blocked"));
     },
     credentials: true,
@@ -47,105 +58,6 @@ function createOrderNumber() {
 
 app.get("/health", (_req, res) => {
   res.json({ ok: true });
-});
-
-app.get("/api/products", async (req, res) => {
-  try {
-    const q = String(req.query.q || "").toLowerCase();
-    const category = String(req.query.category || "");
-    const slug = String(req.query.slug || "");
-    const sort = String(req.query.sort || "new");
-    const page = Number(req.query.page || "1");
-    const pageSize = Number(req.query.pageSize || "12");
-
-    const snapshot = await adminDb.collection("products").where("isActive", "==", true).get();
-    let products = snapshot.docs.map((doc) => serializeProduct(doc.id, doc.data() as Record<string, unknown>));
-
-    if (slug) products = products.filter((p) => p.slug === slug);
-
-    if (q) {
-      products = products.filter((p) =>
-        `${p.name ?? ""} ${p.description ?? ""} ${p.tags?.join(" ") ?? ""}`.toLowerCase().includes(q),
-      );
-    }
-
-    if (category) {
-      products = products.filter((p) => p.categoryId === category || p.categoryName === category || p.slug === category);
-    }
-
-    products = products.sort((a, b) => {
-      if (sort === "price-asc") return Number(a.price) - Number(b.price);
-      if (sort === "price-desc") return Number(b.price) - Number(a.price);
-      if (sort === "best") return Number(Boolean(b.bestSeller)) - Number(Boolean(a.bestSeller));
-      return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
-    });
-
-    const safePage = Number.isFinite(page) && page > 0 ? page : 1;
-    const safePageSize = Number.isFinite(pageSize) && pageSize > 0 ? pageSize : 12;
-    const total = products.length;
-    const start = (safePage - 1) * safePageSize;
-    const end = start + safePageSize;
-
-    res.json({
-      items: products.slice(start, end),
-      pagination: {
-        page: safePage,
-        pageSize: safePageSize,
-        total,
-        totalPages: Math.max(1, Math.ceil(total / safePageSize)),
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post("/api/contact", publicWriteLimiter, async (req, res) => {
-  try {
-    const name = String(req.body?.name || "").trim();
-    const email = String(req.body?.email || "").trim().toLowerCase();
-    const subject = String(req.body?.subject || "").trim();
-    const message = String(req.body?.message || "").trim();
-
-    if (!name || !email || !message) {
-      res.status(400).json({ error: "Name, email, and message are required" });
-      return;
-    }
-
-    await adminDb.collection("contactMessages").add({
-      name,
-      email,
-      subject,
-      message,
-      createdAt: new Date().toISOString(),
-    });
-
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
-});
-
-app.post("/api/newsletter", publicWriteLimiter, async (req, res) => {
-  try {
-    const email = String(req.body?.email || "").trim().toLowerCase();
-    if (!email) {
-      res.status(400).json({ error: "Email required" });
-      return;
-    }
-
-    await adminDb.collection("newsletterSubscribers").doc(email).set(
-      {
-        email,
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true },
-    );
-
-    res.json({ success: true });
-  } catch (error) {
-    res.status(500).json({ error: (error as Error).message });
-  }
 });
 
 app.post("/api/orders", async (req, res) => {
@@ -240,59 +152,6 @@ app.post("/api/orders", async (req, res) => {
     res.json({ success: true, orderId: orderRef.id, orderNumber, amount: total });
   } catch (error) {
     res.status(500).json({ success: false, error: (error as Error).message });
-  }
-});
-
-app.get("/api/orders/me", async (req, res) => {
-  try {
-    const user = await getUserFromRequest(req);
-    const snapshot = await adminDb.collection("orders").where("userId", "==", user.uid).get();
-
-    const items = snapshot.docs
-      .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
-      .sort((a, b) => {
-        const timeA = new Date(String((a as Record<string, unknown>).createdAt || 0)).getTime();
-        const timeB = new Date(String((b as Record<string, unknown>).createdAt || 0)).getTime();
-        return timeB - timeA;
-      });
-
-    res.json({ items });
-  } catch (error) {
-    res.status(401).json({ error: (error as Error).message });
-  }
-});
-
-app.get("/api/orders/id/:orderId", async (req, res) => {
-  try {
-    const user = await getUserFromRequest(req);
-    const orderId = String(req.params.orderId || "");
-    const doc = await adminDb.collection("orders").doc(orderId).get();
-    if (!doc.exists) {
-      res.status(404).json({ error: "Order not found" });
-      return;
-    }
-
-    const orderData = doc.data() as Record<string, unknown> & { userId?: string };
-    const order = { id: doc.id, ...orderData };
-    const orderUserId = String(orderData.userId || "");
-
-    if (user.role !== "admin" && orderUserId !== user.uid) {
-      res.status(403).json({ error: "Forbidden" });
-      return;
-    }
-
-    const eventsSnap = await adminDb.collection("orders").doc(orderId).collection("statusEvents").get();
-    const events = eventsSnap.docs
-      .map((e) => ({ id: e.id, ...(e.data() as Record<string, unknown>) }))
-      .sort(
-        (a, b) =>
-          new Date(String((b as Record<string, unknown>).createdAt || 0)).getTime() -
-          new Date(String((a as Record<string, unknown>).createdAt || 0)).getTime(),
-      );
-
-    res.json({ order, events });
-  } catch (error) {
-    res.status(401).json({ error: (error as Error).message });
   }
 });
 
@@ -501,70 +360,6 @@ app.post("/api/paystack/verify", async (req, res) => {
     res.json({ success: true, orderId });
   } catch (error) {
     res.status(500).json({ success: false, error: (error as Error).message });
-  }
-});
-
-app.get("/api/settings/public", async (_req, res) => {
-  try {
-    const snap = await adminDb.collection("settings").doc("store").get();
-    const settings = snap.exists
-      ? serializeStoreSettings(snap.data() as Record<string, unknown>)
-      : defaultStoreSettings;
-
-    res.json({
-      item: {
-        storeName: settings.storeName,
-        phone: settings.phone,
-        announcementEnabled: settings.announcementEnabled,
-        announcementText: settings.announcementText,
-        announcementSpeed: settings.announcementSpeed,
-      },
-    });
-  } catch {
-    res.json({
-      item: {
-        storeName: defaultStoreSettings.storeName,
-        phone: defaultStoreSettings.phone,
-        announcementEnabled: defaultStoreSettings.announcementEnabled,
-        announcementText: defaultStoreSettings.announcementText,
-        announcementSpeed: defaultStoreSettings.announcementSpeed,
-      },
-    });
-  }
-});
-
-app.get("/api/me", async (req, res) => {
-  try {
-    const user = await getUserFromRequest(req);
-    res.json({ profile: user });
-  } catch (error) {
-    res.status(401).json({ error: (error as Error).message });
-  }
-});
-
-app.post("/api/users/profile", async (req, res) => {
-  try {
-    const decoded = await verifyTokenFromRequest(req);
-    const name = String(req.body?.name || decoded.name || decoded.email?.split("@")[0] || "Customer");
-    const email = String(req.body?.email || decoded.email || "");
-    const existing = await adminDb.collection("users").doc(decoded.uid).get();
-    const role = String((existing.data() as Record<string, unknown> | undefined)?.role || "customer");
-
-    await adminDb.collection("users").doc(decoded.uid).set(
-      {
-        uid: decoded.uid,
-        name,
-        email,
-        role,
-        createdAt: String((existing.data() as Record<string, unknown> | undefined)?.createdAt || new Date().toISOString()),
-        updatedAt: new Date().toISOString(),
-      },
-      { merge: true },
-    );
-
-    res.json({ success: true });
-  } catch (error) {
-    res.status(401).json({ error: (error as Error).message });
   }
 });
 

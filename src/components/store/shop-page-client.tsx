@@ -1,4 +1,4 @@
-"use client";
+
 
 import { Link } from "react-router-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchProducts } from "@/lib/firestore";
 import type { Product } from "@/types";
 
 const categories = [
-  { id: "all", name: "All", count: 24 },
-  { id: "fashion-accessories", name: "Fashion & Accessories", count: 12 },
-  { id: "beauty-personal-care", name: "Beauty & Personal Care", count: 8 },
-  { id: "foodstuff-groceries", name: "Foodstuff & Groceries", count: 4 },
+  { id: "all", name: "All" },
+  { id: "fashion-accessories", name: "Fashion & Accessories" },
+  { id: "beauty-personal-care", name: "Beauty & Personal Care" },
+  { id: "foodstuff-groceries", name: "Foodstuff & Groceries" },
 ];
 
 export function ShopPageClient({
@@ -41,15 +42,10 @@ export function ShopPageClient({
   const [totalPages, setTotalPages] = useState(initialTotalPages);
   const firstRun = useRef(true);
 
-  const queryString = useMemo(() => {
-    const params = new URLSearchParams();
-    if (q) params.set("q", q);
-    if (category !== "all") params.set("category", category);
-    params.set("sort", sort);
-    params.set("page", String(page));
-    params.set("pageSize", "12");
-    return params.toString();
-  }, [q, category, sort, page]);
+  const filters = useMemo(
+    () => ({ q, category: category !== "all" ? category : "", sort, page, pageSize: 12 }),
+    [q, category, sort, page],
+  );
 
   useEffect(() => {
     if (firstRun.current) {
@@ -58,14 +54,13 @@ export function ShopPageClient({
     }
 
     setLoading(true);
-    fetch(`/api/products?${queryString}`)
-      .then((r) => r.json())
+    fetchProducts(filters)
       .then((data) => {
-        setItems(data.items || []);
-        setTotalPages(data.pagination?.totalPages || 1);
+        setItems(data.items);
+        setTotalPages(data.pagination.totalPages);
       })
       .finally(() => setLoading(false));
-  }, [queryString]);
+  }, [filters]);
 
   return (
     <div className="bg-[#F4F4F4]">
@@ -98,7 +93,6 @@ export function ShopPageClient({
                       className={`flex w-full items-center justify-between text-left text-[13px] font-semibold transition-colors hover:text-[#8B2030] ${category === cat.id ? "text-[#8B2030]" : "text-zinc-600"}`}
                     >
                       {cat.name}
-                      <span className="text-[11px] font-normal text-zinc-400">({cat.count})</span>
                     </button>
                   </li>
                 ))}
