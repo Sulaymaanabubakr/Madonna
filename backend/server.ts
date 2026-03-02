@@ -7,6 +7,7 @@ import { sendOrderEmail } from "../src/lib/email";
 import { checkoutSchema } from "../src/lib/schemas";
 import type { CartItem, Order } from "../src/types";
 import { getUserFromRequest, requireAdmin } from "./auth";
+import cloudinary from "../src/lib/cloudinary";
 
 const app = express();
 const PORT = Number(process.env.PORT || 3001);
@@ -43,7 +44,7 @@ app.use(
     credentials: true,
   }),
 );
-app.use(express.json({ limit: "1mb" }));
+app.use(express.json({ limit: "10mb" }));
 
 const publicWriteLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
@@ -395,6 +396,21 @@ app.put("/api/admin/settings", async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     res.status(403).json({ error: (error as Error).message });
+  }
+});
+
+app.post("/api/admin/upload", async (req, res) => {
+  try {
+    await requireAdmin(req);
+    const { image } = req.body as { image?: string };
+    if (!image) {
+      res.status(400).json({ error: "No image provided" });
+      return;
+    }
+    const result = await cloudinary.uploader.upload(image, { folder: "madonna_products" });
+    res.json({ url: result.secure_url, publicId: result.public_id });
+  } catch (error) {
+    res.status(500).json({ error: (error as Error).message });
   }
 });
 

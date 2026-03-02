@@ -249,7 +249,7 @@ export function Header() {
                                     <Menu className="h-5 w-5 text-zinc-800" />
                                 </Button>
                             </SheetTrigger>
-                            <SheetContent side="left" className="w-[85%] max-w-sm rounded-none border-none p-0">
+                            <SheetContent side="left" className="w-[85%] max-w-sm rounded-none border-none p-0" aria-describedby={undefined}>
                                 <SheetTitle className="sr-only">Main navigation menu</SheetTitle>
                                 <SheetDescription className="sr-only">
                                     Browse pages like Home, Shop, Products, and Contact.

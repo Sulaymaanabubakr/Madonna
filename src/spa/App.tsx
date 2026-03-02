@@ -2,6 +2,8 @@ import { Suspense, lazy } from "react";
 import { Route, Routes, Outlet } from "react-router-dom";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { AdminRoute } from "@/components/layout/admin-route";
+import { AdminLayout } from "@/components/admin/admin-layout";
 
 const HomePage = lazy(() => import("@/spa/pages/home-page").then((m) => ({ default: m.HomePage })));
 const ShopPage = lazy(() => import("@/spa/pages/shop-page").then((m) => ({ default: m.ShopPage })));
@@ -24,6 +26,27 @@ const WishlistPage = lazy(() => import("@/spa/pages/wishlist-page").then((m) => 
 const AdminPage = lazy(() => import("@/spa/pages/admin-page").then((m) => ({ default: m.AdminPage })));
 const AdminSettingsPage = lazy(() =>
   import("@/spa/pages/admin-settings-page").then((m) => ({ default: m.AdminSettingsPage })),
+);
+const AdminOrdersPage = lazy(() =>
+  import("@/spa/pages/admin-orders-page").then((m) => ({ default: m.AdminOrdersPage })),
+);
+const AdminProductsPage = lazy(() =>
+  import("@/spa/pages/admin-products-page").then((m) => ({ default: m.AdminProductsPage })),
+);
+const AdminUsersPage = lazy(() =>
+  import("@/spa/pages/admin-users-page").then((m) => ({ default: m.AdminUsersPage })),
+);
+const AdminProductEditPage = lazy(() =>
+  import("@/spa/pages/admin-product-edit-page").then((m) => ({ default: m.AdminProductEditPage })),
+);
+const AdminCategoriesPage = lazy(() =>
+  import("@/spa/pages/admin-categories-page").then((m) => ({ default: m.AdminCategoriesPage })),
+);
+const AdminOrderDetailPage = lazy(() =>
+  import("@/spa/pages/admin-order-detail-page").then((m) => ({ default: m.AdminOrderDetailPage })),
+);
+const AdminInventoryPage = lazy(() =>
+  import("@/spa/pages/admin-inventory-page").then((m) => ({ default: m.AdminInventoryPage })),
 );
 const AdminLoginPage = lazy(() =>
   import("@/spa/pages/admin-login-page").then((m) => ({ default: m.AdminLoginPage })),
@@ -60,9 +83,23 @@ export function App() {
           <Route path="/track/:orderId" element={<TrackOrderPage />} />
           <Route path="/category/:slug" element={<CategoryPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/settings" element={<AdminSettingsPage />} />
           <Route path="*" element={<NotFound />} />
+        </Route>
+
+        {/* Admin section — protected and with admin layout */}
+        <Route element={<AdminRoute />}>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/orders" element={<AdminOrdersPage />} />
+            <Route path="/admin/orders/:id" element={<AdminOrderDetailPage />} />
+            <Route path="/admin/products" element={<AdminProductsPage />} />
+            <Route path="/admin/products/new" element={<AdminProductEditPage />} />
+            <Route path="/admin/products/:id" element={<AdminProductEditPage />} />
+            <Route path="/admin/categories" element={<AdminCategoriesPage />} />
+            <Route path="/admin/inventory" element={<AdminInventoryPage />} />
+            <Route path="/admin/users" element={<AdminUsersPage />} />
+            <Route path="/admin/settings" element={<AdminSettingsPage />} />
+          </Route>
         </Route>
       </Routes>
     </Suspense>

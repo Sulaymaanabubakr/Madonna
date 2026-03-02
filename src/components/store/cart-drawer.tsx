@@ -22,7 +22,7 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
             <SheetTrigger asChild>
                 {children}
             </SheetTrigger>
-            <SheetContent className="flex w-full flex-col p-0 sm:max-w-md rounded-none border-l border-zinc-200">
+            <SheetContent className="flex w-full flex-col p-0 sm:max-w-md rounded-none border-l border-zinc-200" aria-describedby={undefined}>
                 <SheetHeader className="border-b bg-zinc-50 p-6">
                     <SheetDescription className="sr-only">
                         Review selected items, adjust quantities, and proceed to checkout.

@@ -58,7 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             createdAt: new Date().toISOString(),
           };
           const stored = await fetchUserProfile(firebaseUser.uid);
-          setProfile(stored ?? fallback);
+          const finalProfile = stored ?? fallback;
+
+          // Seeded Admin Email
+          if (firebaseUser.email === "madonnaexpresslinkventure@gmail.com") {
+            finalProfile.role = "admin";
+          }
+
+          setProfile(finalProfile);
         } else {
           setProfile(null);
         }
