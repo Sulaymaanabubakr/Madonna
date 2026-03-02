@@ -47,10 +47,63 @@ const templates = [
     }))
 ];
 
+async function fetchRealImages() {
+    type DJResponse = { products: { category: string; thumbnail: string; images: string[] }[] };
+    try {
+        const res = await fetch('https://dummyjson.com/products?limit=150');
+        const data = (await res.json()) as DJResponse;
+
+        const map: Record<string, string[]> = {
+            shoes: [],
+            clothing: [],
+            beauty: [],
+            jewelry: [],
+            food: []
+        };
+
+        const addImg = (cat: string, img: string) => {
+            if (map[cat] && !map[cat].includes(img)) map[cat].push(img);
+        };
+
+        data.products.forEach(p => {
+            const img = p.images?.[0] || p.thumbnail;
+            if (!img) return;
+
+            if (p.category === 'mens-shoes' || p.category === 'womens-shoes') addImg('shoes', img);
+            else if (p.category === 'mens-shirts' || p.category === 'tops' || p.category === 'womens-dresses') addImg('clothing', img);
+            else if (p.category === 'beauty' || p.category === 'skin-care' || p.category === 'fragrances') addImg('beauty', img);
+            else if (p.category === 'womens-jewellery') addImg('jewelry', img);
+            else if (p.category === 'groceries') addImg('food', img);
+        });
+
+        return map;
+    } catch {
+        return null;
+    }
+}
+
 async function seed100() {
     const { adminDb } = await import("../src/lib/firebase/admin");
 
     console.log("Starting 100-product seed process for true project ID:", process.env.FIREBASE_PROJECT_ID);
+
+    console.log("Fetching realistic images from dummyjson...");
+    const realImages = await fetchRealImages();
+    if (!realImages) {
+        console.error("Failed to fetch realistic images. Ensure you have internet access.");
+        process.exit(1);
+    }
+
+    // Quick fallback index trackers
+    const trackers: Record<string, number> = { shoes: 0, clothing: 0, beauty: 0, jewelry: 0, food: 0 };
+
+    const getImgFor = (catId: string, itemIdx: number) => {
+        const pool = realImages[catId] || [];
+        if (pool.length === 0) return `https://loremflickr.com/600/600/${catId}?lock=${itemIdx}`;
+        // Cycle sequentially through available real images
+        const idx = (trackers[catId]++) % pool.length;
+        return pool[idx];
+    };
 
     // First clean up previous products so the db isn't polluted
     console.log("Cleaning up old products...");
@@ -84,7 +137,7 @@ async function seed100() {
             newArrival: count >= 25 && count < 40,
             images: [
                 {
-                    url: `https://loremflickr.com/600/600/${item.categoryId}?lock=${count + 1}`,
+                    url: getImgFor(item.categoryId, count),
                     publicId: `dummy_${docRef.id}`, // the frontend expects this property
                     alt: item.name
                 }

@@ -11,7 +11,7 @@ export function HomePage() {
   const [items, setItems] = useState<Product[]>([]);
 
   useEffect(() => {
-    fetchProducts({ page: 1, pageSize: 40 })
+    fetchProducts({ page: 1, pageSize: 150 })
       .then((data) => setItems(data.items))
       .catch(() => setItems([]));
   }, []);
