@@ -10,7 +10,7 @@ import { fetchPublicSettings } from "@/lib/firestore";
 import { formatCurrency } from "@/lib/query";
 
 export function CartDrawer({ children }: { children: React.ReactNode }) {
-    const { items, setQty, removeItem, subtotal } = useCart();
+    const { items, setQty, removeItem, subtotal, ready } = useCart();
     const [deliveryFee, setDeliveryFee] = useState(0);
 
     useEffect(() => {
@@ -40,7 +40,11 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
                 </SheetHeader>
 
                 <div className="flex-1 overflow-y-auto p-6 no-scrollbar">
-                    {items.length === 0 ? (
+                    {!ready ? (
+                        <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+                            Loading cart...
+                        </div>
+                    ) : items.length === 0 ? (
                         <div className="flex h-full flex-col items-center justify-center space-y-4 text-center">
                             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-zinc-100">
                                 <ShoppingBag className="h-8 w-8 text-zinc-400" />
@@ -106,7 +110,7 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
                     )}
                 </div>
 
-                {items.length > 0 && (
+                {ready && items.length > 0 && (
                     <div className="border-t bg-zinc-50 p-6">
                         <div className="mb-2 flex items-center justify-between">
                             <span className="text-sm font-bold uppercase tracking-widest text-zinc-500">Subtotal</span>
@@ -124,18 +128,18 @@ export function CartDrawer({ children }: { children: React.ReactNode }) {
                         </div>
                         <div className="grid gap-3">
                             <SheetClose asChild>
-                                <Link to="/checkout">
-                                    <Button variant="outline" className="w-full rounded-none border-zinc-300 text-xs font-bold uppercase tracking-widest text-zinc-900 hover:bg-zinc-100">
+                                <Button asChild variant="outline" className="w-full rounded-none border-zinc-300 text-xs font-bold uppercase tracking-widest text-zinc-900 hover:bg-zinc-100">
+                                    <Link to="/checkout">
                                         View Checkout
-                                    </Button>
-                                </Link>
+                                    </Link>
+                                </Button>
                             </SheetClose>
                             <SheetClose asChild>
-                                <Link to="/checkout">
-                                    <Button className="w-full rounded-none bg-[#8B2030] text-xs font-bold uppercase tracking-widest text-white hover:bg-[#721a27]">
+                                <Button asChild className="w-full rounded-none bg-[#8B2030] text-xs font-bold uppercase tracking-widest text-white hover:bg-[#721a27]">
+                                    <Link to="/checkout">
                                         Checkout
-                                    </Button>
-                                </Link>
+                                    </Link>
+                                </Button>
                             </SheetClose>
                         </div>
                     </div>

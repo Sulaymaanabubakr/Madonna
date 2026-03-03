@@ -64,7 +64,7 @@ export function TrackLookupPage() {
 
       <div className="container mx-auto max-w-2xl px-4 py-12">
         <form onSubmit={onSubmit} className="space-y-4 border border-zinc-200 bg-white p-8">
-          <Input placeholder="Order ID" value={orderId} onChange={(e) => setOrderId(e.target.value)} className="h-12 rounded-none border-zinc-300 text-[13px] focus-visible:ring-[#8B2030]" required />
+          <Input placeholder="Order ID or Order Number" value={orderId} onChange={(e) => setOrderId(e.target.value)} className="h-12 rounded-none border-zinc-300 text-[13px] focus-visible:ring-[#8B2030]" required />
           <Input placeholder="Email (or use phone)" type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-12 rounded-none border-zinc-300 text-[13px] focus-visible:ring-[#8B2030]" />
           <Input placeholder="Phone (optional if email provided)" value={phone} onChange={(e) => setPhone(e.target.value)} className="h-12 rounded-none border-zinc-300 text-[13px] focus-visible:ring-[#8B2030]" />
           <Button className="h-12 w-full rounded-none bg-[#222222] text-xs font-bold uppercase tracking-widest text-white hover:bg-[#8B2030]" disabled={loading}>{loading ? "Checking..." : "Track Order"}</Button>

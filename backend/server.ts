@@ -5,6 +5,7 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { randomUUID } from "node:crypto";
+import type { Request, Response } from "express";
 import { adminDb } from "../src/lib/firebase/admin";
 import { sendOrderEmail } from "../src/lib/email";
 import { checkoutSchema } from "../src/lib/schemas";
@@ -53,11 +54,28 @@ app.use(
 );
 app.use(express.json({ limit: "10mb" }));
 
+function rateLimitJsonHandler(req: Request, res: Response) {
+  res.status(429).json({
+    success: false,
+    error: "Too many requests. Please wait a few minutes and try again.",
+    path: req.path,
+  });
+}
+
 const publicWriteLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   max: 30,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: rateLimitJsonHandler,
+});
+
+const paymentVerifyLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitJsonHandler,
 });
 
 function createOrderNumber() {
@@ -68,23 +86,63 @@ app.get("/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.post("/api/orders", async (req, res) => {
+app.post("/api/orders", publicWriteLimiter, async (req, res) => {
   try {
     const parsed = checkoutSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ success: false, error: parsed.error.flatten() });
+      const flattened = parsed.error.flatten();
+      const fieldEntries = Object.entries(flattened.fieldErrors)
+        .map(([field, messages]) => {
+          const first = Array.isArray(messages) ? messages[0] : undefined;
+          return first ? `${field}: ${first}` : "";
+        })
+        .filter(Boolean);
+      const formMessage = flattened.formErrors[0] || "";
+      const message = [formMessage, ...fieldEntries].filter(Boolean).join(" | ") || "Invalid checkout payload";
+      res.status(400).json({ success: false, error: message, details: flattened });
       return;
     }
 
     const data = parsed.data;
+    let authenticatedUserId: string | undefined;
+    try {
+      const requester = await getUserFromRequest(req);
+      authenticatedUserId = requester.uid;
+    } catch {
+      authenticatedUserId = undefined;
+    }
 
-    const productDocs = await Promise.all(
-      data.items.map((item) => adminDb.collection("products").doc(item.productId).get()),
+    const productSnapshots = await Promise.all(
+      data.items.map(async (item) => {
+        const byId = await adminDb.collection("products").doc(item.productId).get();
+        if (byId.exists) return byId;
+        const slug = String(item.productSlug || "").trim();
+        if (slug) {
+          const bySlug = await adminDb.collection("products").where("slug", "==", slug).limit(1).get();
+          if (!bySlug.empty) return bySlug.docs[0];
+        }
+
+        // Last-resort migration fallback for legacy carts after reseeding IDs/slugs.
+        const name = String(item.name || "").trim();
+        if (name) {
+          const byName = await adminDb.collection("products").where("name", "==", name).limit(1).get();
+          if (!byName.empty) return byName.docs[0];
+        }
+        return byId;
+      }),
     );
 
-    const validatedItems: CartItem[] = data.items.map((item, idx) => {
-      const snap = productDocs[idx];
-      if (!snap.exists) throw new Error(`Product not found: ${item.productId}`);
+    const validatedItems: CartItem[] = [];
+    const missingProductIds: string[] = [];
+    const inactiveProductIds: string[] = [];
+    const insufficientStockItems: Array<{ productId: string; requestedQty: number; availableQty: number }> = [];
+
+    data.items.forEach((item, idx) => {
+      const snap = productSnapshots[idx];
+      if (!snap.exists) {
+        missingProductIds.push(item.productId);
+        return;
+      }
 
       const product = snap.data() as {
         name?: string;
@@ -94,12 +152,31 @@ app.post("/api/orders", async (req, res) => {
         images?: Array<{ url?: string }>;
       };
 
-      if (!product.isActive) throw new Error(`Product is inactive: ${item.productId}`);
-      if (typeof product.stockQty !== "number" || item.qty > product.stockQty) {
-        throw new Error(`Insufficient stock for: ${product.name || item.productId}`);
+      if (!product.isActive) {
+        inactiveProductIds.push(item.productId);
+        return;
+      }
+      const liveStock = typeof product.stockQty === "number" ? product.stockQty : 0;
+      if (item.qty > liveStock) {
+        insufficientStockItems.push({
+          productId: item.productId,
+          requestedQty: item.qty,
+          availableQty: liveStock,
+        });
+        if (liveStock < 1) return;
+        validatedItems.push({
+          productId: item.productId,
+          productSlug: item.productSlug,
+          name: product.name || item.name,
+          price: Number(product.price || 0),
+          qty: liveStock,
+          imageUrl: product.images?.[0]?.url || item.imageUrl,
+          stockQty: Number(product.stockQty || item.stockQty),
+        });
+        return;
       }
 
-      return {
+      validatedItems.push({
         productId: item.productId,
         productSlug: item.productSlug,
         name: product.name || item.name,
@@ -107,8 +184,22 @@ app.post("/api/orders", async (req, res) => {
         qty: item.qty,
         imageUrl: product.images?.[0]?.url || item.imageUrl,
         stockQty: Number(product.stockQty || item.stockQty),
-      };
+      });
     });
+
+    if (validatedItems.length === 0 && (missingProductIds.length || inactiveProductIds.length || insufficientStockItems.length)) {
+      res.status(409).json({
+        success: false,
+        code: "CART_OUTDATED",
+        error: "Some products in your cart are no longer available or have changed stock.",
+        details: {
+          missingProductIds,
+          inactiveProductIds,
+          insufficientStockItems,
+        },
+      });
+      return;
+    }
 
     const subtotal = validatedItems.reduce((sum, item) => sum + item.price * item.qty, 0);
     const settingsSnap = await adminDb.collection("settings").doc("store").get();
@@ -122,7 +213,6 @@ app.post("/api/orders", async (req, res) => {
     const newOrder: Order = {
       id: orderRef.id,
       orderNumber,
-      userId: data.userId,
       customer: {
         name: data.customer.name,
         email: data.customer.email,
@@ -149,32 +239,60 @@ app.post("/api/orders", async (req, res) => {
       createdAt: now,
       updatedAt: now,
     };
+    if (authenticatedUserId) {
+      newOrder.userId = authenticatedUserId;
+    }
 
-    await orderRef.set(newOrder);
+    const sanitizedOrder = JSON.parse(JSON.stringify(newOrder)) as Order;
+    await orderRef.set(sanitizedOrder);
     await orderRef.collection("statusEvents").add({
       status: "pending",
       note: "Order created, waiting for payment",
       createdAt: now,
     });
 
-    res.json({ success: true, orderId: orderRef.id, orderNumber, amount: total });
+    res.json({
+      success: true,
+      orderId: orderRef.id,
+      orderNumber,
+      amount: total,
+      adjustments: {
+        missingProductIds,
+        inactiveProductIds,
+        insufficientStockItems,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: (error as Error).message });
+    const message = (error as Error).message;
+    console.error("[/api/orders] checkout error:", error);
+    const statusCode = message.startsWith("Product") || message.startsWith("Insufficient stock") ? 400 : 500;
+    res.status(statusCode).json({ success: false, error: message });
   }
 });
 
 app.get("/api/orders/track", publicWriteLimiter, async (req, res) => {
   try {
-    const orderId = String(req.query.orderId || "");
+    const orderIdOrNumber = String(req.query.orderId || req.query.orderNumber || "").trim();
     const email = String(req.query.email || "").toLowerCase();
     const phone = String(req.query.phone || "");
 
-    if (!orderId || (!email && !phone)) {
-      res.status(400).json({ error: "orderId and email or phone required" });
+    if (!orderIdOrNumber || (!email && !phone)) {
+      res.status(400).json({ error: "orderId/orderNumber and email or phone required" });
       return;
     }
 
-    const orderDoc = await adminDb.collection("orders").doc(orderId).get();
+    let orderDoc = await adminDb.collection("orders").doc(orderIdOrNumber).get();
+    if (!orderDoc.exists) {
+      const orderNumberQuery = await adminDb
+        .collection("orders")
+        .where("orderNumber", "==", orderIdOrNumber)
+        .limit(1)
+        .get();
+      if (!orderNumberQuery.empty) {
+        orderDoc = orderNumberQuery.docs[0];
+      }
+    }
+
     if (!orderDoc.exists) {
       res.status(404).json({ error: "Order not found" });
       return;
@@ -298,7 +416,7 @@ app.post("/api/paystack/initialize", async (req, res) => {
   }
 });
 
-app.post("/api/paystack/verify", async (req, res) => {
+app.post("/api/paystack/verify", paymentVerifyLimiter, async (req, res) => {
   try {
     const { reference } = req.body as { reference?: string };
     if (!reference) {
@@ -317,7 +435,9 @@ app.post("/api/paystack/verify", async (req, res) => {
     });
 
     const verifyData = await verifyRes.json();
-    if (!verifyData.status || verifyData.data.status !== "success") {
+    const verifyStatus = Boolean(verifyData?.status);
+    const paymentStatus = String(verifyData?.data?.status || "");
+    if (!verifyStatus || paymentStatus !== "success") {
       res.status(400).json({ success: false, error: "Payment verification failed" });
       return;
     }
@@ -333,33 +453,74 @@ app.post("/api/paystack/verify", async (req, res) => {
     const orderId = orderDoc.id;
     const orderData = orderDoc.data() as Record<string, unknown>;
 
-    const metadataOrderId = verifyData.data.metadata?.orderId;
+    const metadataOrderId = verifyData?.data?.metadata?.orderId;
     if (metadataOrderId && metadataOrderId !== orderId) {
       res.status(400).json({ success: false, error: "Payment metadata does not match order reference" });
       return;
     }
 
     const expectedKobo = Math.round(Number(orderData.total || 0) * 100);
-    const paidKobo = Number(verifyData.data.amount || 0);
+    const paidKobo = Number(verifyData?.data?.amount || 0);
     if (expectedKobo <= 0 || paidKobo !== expectedKobo) {
       res.status(400).json({ success: false, error: "Paid amount does not match order total" });
       return;
     }
 
-    if (orderData.status === "pending" && (orderData.payment as { status?: string } | undefined)?.status === "unpaid") {
-      await orderRef.update({
+    let paymentTransitioned = false;
+    await adminDb.runTransaction(async (tx) => {
+      const latestOrderDoc = await tx.get(orderRef);
+      if (!latestOrderDoc.exists) throw new Error("Order no longer exists");
+
+      const latestOrder = latestOrderDoc.data() as Record<string, unknown>;
+      const latestPayment = (latestOrder.payment as { status?: string } | undefined)?.status || "unpaid";
+      const latestStatus = String(latestOrder.status || "");
+      if (latestPayment === "paid") return;
+
+      if (!(latestStatus === "pending" && latestPayment === "unpaid")) {
+        throw new Error("Order is not payable in its current status");
+      }
+
+      const items = Array.isArray(latestOrder.items)
+        ? (latestOrder.items as Array<{ productId?: string; qty?: number }>)
+        : [];
+
+      for (const item of items) {
+        const productId = String(item.productId || "");
+        const qty = Math.floor(Number(item.qty || 0));
+        if (!productId || qty < 1) throw new Error("Invalid order item while confirming payment");
+
+        const productRef = adminDb.collection("products").doc(productId);
+        const productDoc = await tx.get(productRef);
+        if (!productDoc.exists) throw new Error(`Product no longer exists: ${productId}`);
+
+        const product = productDoc.data() as { stockQty?: number; name?: string };
+        const currentStock = Number(product.stockQty || 0);
+        if (!Number.isFinite(currentStock) || currentStock < qty) {
+          throw new Error(`Insufficient stock for: ${product.name || productId}`);
+        }
+
+        tx.update(productRef, {
+          stockQty: currentStock - qty,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      const now = new Date().toISOString();
+      tx.update(orderRef, {
         status: "confirmed",
         "payment.status": "paid",
-        "payment.paidAt": new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        "payment.paidAt": now,
+        updatedAt: now,
       });
-
-      await orderRef.collection("statusEvents").add({
+      tx.set(orderRef.collection("statusEvents").doc(), {
         status: "confirmed",
         note: "Payment verified successfully via Paystack",
-        createdAt: new Date().toISOString(),
+        createdAt: now,
       });
+      paymentTransitioned = true;
+    });
 
+    if (paymentTransitioned) {
       const customerEmail = String(((orderData.customer as Record<string, unknown> | undefined)?.email) || "");
       const orderNumber = String(orderData.orderNumber || orderId);
       if (customerEmail) await sendOrderEmail(customerEmail, orderNumber).catch(() => undefined);
@@ -367,7 +528,20 @@ app.post("/api/paystack/verify", async (req, res) => {
 
     res.json({ success: true, orderId });
   } catch (error) {
-    res.status(500).json({ success: false, error: (error as Error).message });
+    const message = (error as Error).message;
+    console.error("[/api/paystack/verify] verify error:", error);
+    const statusCode =
+      message.includes("Insufficient stock") ||
+      message.includes("Product no longer exists") ||
+      message.includes("Order no longer exists") ||
+      message.includes("Order is not payable") ||
+      message.includes("Invalid order item")
+        ? 409
+        : 500;
+    res.status(statusCode).json({
+      success: false,
+      error: message || "Payment verification failed due to an unexpected server error.",
+    });
   }
 });
 

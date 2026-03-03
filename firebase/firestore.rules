@@ -24,7 +24,12 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      // Users can update their own profile fields, but cannot self-assign admin role.
+      allow create: if isAdmin() || ((isSignedIn() && request.auth.uid == userId)
+                    && request.resource.data.role == "customer");
+      allow update: if isAdmin() || ((isSignedIn() && request.auth.uid == userId)
+                    && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
     }
 
     match /carts/{userId} {

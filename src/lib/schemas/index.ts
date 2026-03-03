@@ -54,7 +54,7 @@ export const checkoutSchema = z.object({
       imageUrl: z.string().min(1),
       stockQty: z.number().int().nonnegative(),
     }),
-  ),
+  ).min(1),
   subtotal: z.number().nonnegative(),
   deliveryFee: z.number().nonnegative(),
   total: z.number().positive(),

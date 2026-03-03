@@ -22,6 +22,24 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const authFallback: AuthContextType = {
+  enabled: false,
+  user: null,
+  profile: null,
+  loading: false,
+  register: async () => {
+    throw new Error("Auth provider unavailable");
+  },
+  login: async () => {
+    throw new Error("Auth provider unavailable");
+  },
+  loginWithGoogle: async () => {
+    throw new Error("Auth provider unavailable");
+  },
+  logout: async () => undefined,
+  getToken: async () => null,
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -139,6 +157,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
-  return ctx;
+  return ctx ?? authFallback;
 }

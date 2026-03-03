@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Product } from "@/types";
 import { useCart } from "@/components/providers/cart-provider";
 import { formatCurrency } from "@/lib/query";
-import { toast } from "sonner";
 import { ProductCard } from "@/components/store/product-card";
 
 export function ProductDetailClient({ product }: { product: Product | null }) {
@@ -30,7 +29,6 @@ export function ProductDetailClient({ product }: { product: Product | null }) {
       imageUrl: product.images[0]?.url || "/placeholder.svg",
       stockQty: product.stockQty,
     });
-    toast.success(`${product.name} added to your cart`, { style: { borderRadius: "0px" } });
   };
 
   return (

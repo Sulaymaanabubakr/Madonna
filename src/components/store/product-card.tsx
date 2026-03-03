@@ -6,7 +6,6 @@ import type { Product } from "@/types";
 import { useCart } from "@/components/providers/cart-provider";
 import { useWishlist } from "@/components/providers/wishlist-provider";
 import { formatCurrency } from "@/lib/query";
-import { toast } from "sonner";
 
 interface ProductCardProps {
     product: Product;
@@ -35,9 +34,6 @@ export function ProductCard({ product }: ProductCardProps) {
             qty: 1,
             imageUrl: product.images[0]?.url || "/placeholder.svg",
             stockQty: product.stockQty,
-        });
-        toast.success(`${product.name} added to your cart`, {
-            style: { borderRadius: '0px' }
         });
     };
 

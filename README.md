@@ -13,7 +13,7 @@ A full-stack e-commerce storefront for Madonna Link Express Ventures, built with
 | Auth | Firebase Auth (email + Google) |
 | Database | Firestore (Firebase Admin SDK) |
 | Payments | Paystack |
-| Email | Resend |
+| Email | Brevo |
 | Images | Cloudinary |
 
 ---
@@ -98,7 +98,7 @@ These are embedded into the client bundle by Vite and are safe to expose.
 ### Email
 | Variable | Description |
 |---|---|
-| `RESEND_API_KEY` | Resend API key for transactional emails |
+| `BREVO_API_KEY` | Brevo API key for transactional emails |
 | `EMAIL_FROM` | Sender address e.g. `Store Name <orders@yourdomain.com>` |
 
 ### Cloudinary
@@ -148,7 +148,7 @@ This project is configured to deploy on Vercel as a **Vite SPA + Serverless API*
 │   ├── lib/
 │   │   ├── firebase/     # Admin SDK + client SDK setup
 │   │   ├── constants.ts  # Business constants (name, phone, etc.)
-│   │   ├── email.ts      # Resend email sender
+│   │   ├── email.ts      # Brevo email sender
 │   │   ├── schemas/      # Zod validation schemas
 │   │   └── utils.ts      # Utility helpers
 │   ├── spa/
