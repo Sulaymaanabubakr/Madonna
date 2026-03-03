@@ -1,5 +1,5 @@
-import { BUSINESS } from "@/lib/constants";
-import type { StoreSettings } from "@/types";
+import { BUSINESS } from "./constants";
+import type { StoreSettings } from "../types";
 
 function toStringValue(value: unknown, fallback = ""): string {
   if (typeof value === "string") return value;

@@ -1,4 +1,4 @@
-import type { Product } from "@/types";
+import type { Product } from "../types";
 
 function toStringValue(value: unknown, fallback = ""): string {
   if (typeof value === "string") return value;
