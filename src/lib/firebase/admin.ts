@@ -6,13 +6,16 @@ const projectId = process.env.FIREBASE_PROJECT_ID;
 const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
 const rawPrivateKey = process.env.FIREBASE_PRIVATE_KEY || "";
 // Normalize the private key regardless of how Vercel encodes it:
-// 1. Strip surrounding quotes (if Vercel wraps the value in quotes)
+// 1. Strip surrounding quotes (single or double)
 // 2. Replace literal \\n (double-escaped by some platforms) → \n
 // 3. Replace \n escape sequences → real newlines
+// 4. Normalize CRLF to LF
 const privateKey = rawPrivateKey
-  .replace(/^"|"$/g, "")       // strip leading/trailing quotes
-  .replace(/\\\\n/g, "\n")    // double-escaped \\n → newline
-  .replace(/\\n/g, "\n");     // single-escaped \n → newline
+  .replace(/^['"]|['"]$/g, "") // strip leading/trailing quotes
+  .replace(/\\\\n/g, "\n")     // double-escaped \\n → newline
+  .replace(/\\n/g, "\n")       // single-escaped \n → newline
+  .replace(/\r\n/g, "\n")      // windows newlines -> unix
+  .trim();
 
 if (!getApps().length) {
   if (projectId && clientEmail && privateKey) {
