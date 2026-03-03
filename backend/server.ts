@@ -1,12 +1,11 @@
-import { config } from "dotenv";
-config();
+import "dotenv/config";
 
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
-import { adminDb } from "../src/lib/firebase/admin";
+import { getAdminDb } from "../src/lib/firebase/admin";
 import { sendOrderEmail } from "../src/lib/email";
 import { checkoutSchema } from "../src/lib/schemas";
 import type { CartItem, Order } from "../src/types";
@@ -114,18 +113,18 @@ app.post("/api/orders", publicWriteLimiter, async (req, res) => {
 
     const productSnapshots = await Promise.all(
       data.items.map(async (item) => {
-        const byId = await adminDb.collection("products").doc(item.productId).get();
+        const byId = await getAdminDb().collection("products").doc(item.productId).get();
         if (byId.exists) return byId;
         const slug = String(item.productSlug || "").trim();
         if (slug) {
-          const bySlug = await adminDb.collection("products").where("slug", "==", slug).limit(1).get();
+          const bySlug = await getAdminDb().collection("products").where("slug", "==", slug).limit(1).get();
           if (!bySlug.empty) return bySlug.docs[0];
         }
 
         // Last-resort migration fallback for legacy carts after reseeding IDs/slugs.
         const name = String(item.name || "").trim();
         if (name) {
-          const byName = await adminDb.collection("products").where("name", "==", name).limit(1).get();
+          const byName = await getAdminDb().collection("products").where("name", "==", name).limit(1).get();
           if (!byName.empty) return byName.docs[0];
         }
         return byId;
@@ -202,11 +201,11 @@ app.post("/api/orders", publicWriteLimiter, async (req, res) => {
     }
 
     const subtotal = validatedItems.reduce((sum, item) => sum + item.price * item.qty, 0);
-    const settingsSnap = await adminDb.collection("settings").doc("store").get();
+    const settingsSnap = await getAdminDb().collection("settings").doc("store").get();
     const deliveryFee = Number(settingsSnap.data()?.deliveryFee || 0);
     const total = subtotal + deliveryFee;
 
-    const orderRef = adminDb.collection("orders").doc();
+    const orderRef = getAdminDb().collection("orders").doc();
     const now = new Date().toISOString();
     const orderNumber = createOrderNumber();
 
@@ -281,9 +280,9 @@ app.get("/api/orders/track", publicWriteLimiter, async (req, res) => {
       return;
     }
 
-    let orderDoc = await adminDb.collection("orders").doc(orderIdOrNumber).get();
+    let orderDoc = await getAdminDb().collection("orders").doc(orderIdOrNumber).get();
     if (!orderDoc.exists) {
-      const orderNumberQuery = await adminDb
+      const orderNumberQuery = await getAdminDb()
         .collection("orders")
         .where("orderNumber", "==", orderIdOrNumber)
         .limit(1)
@@ -343,7 +342,7 @@ app.post("/api/paystack/initialize", async (req, res) => {
       return;
     }
 
-    const orderRef = adminDb.collection("orders").doc(String(orderId));
+    const orderRef = getAdminDb().collection("orders").doc(String(orderId));
     const orderDoc = await orderRef.get();
     if (!orderDoc.exists) {
       res.status(404).json({ success: false, error: "Order not found." });
@@ -442,7 +441,7 @@ app.post("/api/paystack/verify", paymentVerifyLimiter, async (req, res) => {
       return;
     }
 
-    const refQuery = await adminDb.collection("orders").where("payment.reference", "==", reference).limit(1).get();
+    const refQuery = await getAdminDb().collection("orders").where("payment.reference", "==", reference).limit(1).get();
     if (refQuery.empty) {
       res.status(404).json({ success: false, error: "No order found for payment reference" });
       return;
@@ -467,7 +466,7 @@ app.post("/api/paystack/verify", paymentVerifyLimiter, async (req, res) => {
     }
 
     let paymentTransitioned = false;
-    await adminDb.runTransaction(async (tx) => {
+    await getAdminDb().runTransaction(async (tx) => {
       const latestOrderDoc = await tx.get(orderRef);
       if (!latestOrderDoc.exists) throw new Error("Order no longer exists");
 
@@ -489,7 +488,7 @@ app.post("/api/paystack/verify", paymentVerifyLimiter, async (req, res) => {
         const qty = Math.floor(Number(item.qty || 0));
         if (!productId || qty < 1) throw new Error("Invalid order item while confirming payment");
 
-        const productRef = adminDb.collection("products").doc(productId);
+        const productRef = getAdminDb().collection("products").doc(productId);
         const productDoc = await tx.get(productRef);
         if (!productDoc.exists) throw new Error(`Product no longer exists: ${productId}`);
 
@@ -532,10 +531,10 @@ app.post("/api/paystack/verify", paymentVerifyLimiter, async (req, res) => {
     console.error("[/api/paystack/verify] verify error:", error);
     const statusCode =
       message.includes("Insufficient stock") ||
-      message.includes("Product no longer exists") ||
-      message.includes("Order no longer exists") ||
-      message.includes("Order is not payable") ||
-      message.includes("Invalid order item")
+        message.includes("Product no longer exists") ||
+        message.includes("Order no longer exists") ||
+        message.includes("Order is not payable") ||
+        message.includes("Invalid order item")
         ? 409
         : 500;
     res.status(statusCode).json({
@@ -548,7 +547,7 @@ app.post("/api/paystack/verify", paymentVerifyLimiter, async (req, res) => {
 app.get("/api/admin/settings", async (req, res) => {
   try {
     await requireAdmin(req);
-    const docRef = adminDb.collection("settings").doc("store");
+    const docRef = getAdminDb().collection("settings").doc("store");
     const snap = await docRef.get();
     if (!snap.exists) {
       await docRef.set({ ...defaultStoreSettings });
@@ -566,7 +565,7 @@ app.put("/api/admin/settings", async (req, res) => {
   try {
     await requireAdmin(req);
     const serialized = serializeStoreSettings(req.body as Record<string, unknown>);
-    await adminDb.collection("settings").doc("store").set(
+    await getAdminDb().collection("settings").doc("store").set(
       {
         ...serialized,
         updatedAt: new Date().toISOString(),
@@ -598,7 +597,7 @@ app.post("/api/admin/upload", async (req, res) => {
 app.get("/api/admin/orders", async (req, res) => {
   try {
     await requireAdmin(req);
-    const snapshot = await adminDb.collection("orders").get();
+    const snapshot = await getAdminDb().collection("orders").get();
     const items = snapshot.docs
       .map((doc) => ({ id: doc.id, ...(doc.data() as Record<string, unknown>) }))
       .sort(
@@ -615,7 +614,7 @@ app.get("/api/admin/orders", async (req, res) => {
 app.get("/api/admin/products", async (req, res) => {
   try {
     await requireAdmin(req);
-    const snapshot = await adminDb.collection("products").get();
+    const snapshot = await getAdminDb().collection("products").get();
     const items = snapshot.docs.map((doc) => serializeProduct(doc.id, doc.data() as Record<string, unknown>));
     res.json({ items });
   } catch (error) {

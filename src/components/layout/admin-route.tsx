@@ -21,10 +21,10 @@ export function AdminRoute() {
         return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
-    // If user is logged in but has no admin role.
+    // If user is logged in but has no admin role, send them to the admin login page
+    // so they can sign out and re-login with an admin account.
     if (profile?.role !== "admin") {
-        // Optionally log out unauthorized users trying to breach, or just redirect.
-        return <Navigate to="/" replace />;
+        return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
 
     return <Outlet />;

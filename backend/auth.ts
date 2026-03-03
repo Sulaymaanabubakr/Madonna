@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import { adminAuth, adminDb } from "../src/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "../src/lib/firebase/admin";
 
 export async function verifyTokenFromRequest(req: Request) {
   const authHeader = req.headers.authorization || "";
@@ -7,12 +7,12 @@ export async function verifyTokenFromRequest(req: Request) {
 
   if (!token) throw new Error("Missing auth token");
 
-  return adminAuth.verifyIdToken(token);
+  return getAdminAuth().verifyIdToken(token);
 }
 
 export async function getUserFromRequest(req: Request) {
   const decoded = await verifyTokenFromRequest(req);
-  const userDoc = await adminDb.collection("users").doc(decoded.uid).get();
+  const userDoc = await getAdminDb().collection("users").doc(decoded.uid).get();
   if (!userDoc.exists) {
     return {
       uid: decoded.uid,
