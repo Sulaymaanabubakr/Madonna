@@ -5,7 +5,7 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import { randomUUID } from "node:crypto";
 import type { Request, Response } from "express";
-import { getAdminDb } from "../src/lib/firebase/admin";
+import { getAdminDb, getAdminAuth } from "../src/lib/firebase/admin";
 import { sendOrderEmail } from "../src/lib/email";
 import { checkoutSchema } from "../src/lib/schemas";
 import type { CartItem, Order } from "../src/types";
@@ -540,6 +540,34 @@ app.post("/api/paystack/verify", paymentVerifyLimiter, async (req, res) => {
     res.status(statusCode).json({
       success: false,
       error: message || "Payment verification failed due to an unexpected server error.",
+    });
+  }
+});
+
+// Debug endpoint to check Vercel production health and Firebase initialization
+app.get("/api/health", (req, res) => {
+  try {
+    const adminAuthCheck = !!getAdminAuth();
+    const adminDbCheck = !!getAdminDb();
+
+    res.json({
+      status: "ok",
+      environment: process.env.NODE_ENV,
+      firebase: {
+        authInitialized: adminAuthCheck,
+        dbInitialized: adminDbCheck,
+        projectIdPresent: !!process.env.FIREBASE_PROJECT_ID,
+        clientEmailPresent: !!process.env.FIREBASE_CLIENT_EMAIL,
+        privateKeyLength: (process.env.FIREBASE_PRIVATE_KEY || "").length,
+      },
+      paystackKeyPresent: !!PAYSTACK_SECRET_KEY,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: "error",
+      error: String(error),
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
     });
   }
 });
