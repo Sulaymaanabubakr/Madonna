@@ -24,6 +24,8 @@ const allowedOrigins = [
     .map((v) => v.trim())
     .filter(Boolean),
   ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+  "http://localhost:3000",
+  "http://localhost:5173",
 ];
 
 // Returns true for any origin that is explicitly allowed or is a Vercel preview deployment.

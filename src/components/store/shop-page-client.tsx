@@ -40,7 +40,6 @@ export function ShopPageClient({
   const [sort, setSort] = useState(initialSort);
   const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
-  const firstRun = useRef(true);
 
   const filters = useMemo(
     () => ({ q, category: category !== "all" ? category : "", sort, page, pageSize: 12 }),
@@ -48,11 +47,6 @@ export function ShopPageClient({
   );
 
   useEffect(() => {
-    if (firstRun.current) {
-      firstRun.current = false;
-      return;
-    }
-
     setLoading(true);
     fetchProducts(filters)
       .then((data) => {

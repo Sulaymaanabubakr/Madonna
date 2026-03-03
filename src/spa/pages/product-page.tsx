@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ProductDetailClient } from "@/components/store/product-detail-client";
+import { fetchProducts } from "@/lib/firestore";
 import type { Product } from "@/types";
 
 export function ProductPage() {
@@ -13,11 +14,9 @@ export function ProductPage() {
       return;
     }
 
-    fetch(`/api/products?slug=${encodeURIComponent(slug)}&pageSize=1`)
-      .then((r) => r.json())
+    fetchProducts({ slug, pageSize: 1 })
       .then((data) => {
-        const item = Array.isArray(data.items) ? (data.items[0] as Product | undefined) : undefined;
-        setProduct(item || null);
+        setProduct(data.items.length ? data.items[0] : null);
       })
       .catch(() => setProduct(null));
   }, [slug]);

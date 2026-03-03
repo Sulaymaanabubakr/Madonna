@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { AdminRoute } from "@/components/layout/admin-route";
 import { AdminLayout } from "@/components/admin/admin-layout";
+import { ScrollToTop } from "@/components/layout/scroll-to-top";
 
 const HomePage = lazy(() => import("@/spa/pages/home-page").then((m) => ({ default: m.HomePage })));
 const ShopPage = lazy(() => import("@/spa/pages/shop-page").then((m) => ({ default: m.ShopPage })));
@@ -59,6 +60,7 @@ function NotFound() {
 export function App() {
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-zinc-500">Loading...</div>}>
+      <ScrollToTop />
       <Routes>
         {/* Admin login — no header/footer */}
         <Route path="/admin/login" element={<AdminLoginPage />} />
