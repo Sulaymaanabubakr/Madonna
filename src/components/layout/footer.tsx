@@ -7,7 +7,10 @@ export function Footer() {
                 <div className="flex flex-col items-center sm:items-start">
                     <a href="/" className="mb-6 flex items-center gap-3">
                         <img src="/logo.png" alt="Madonna" className="h-12 w-auto flex-shrink-0 rounded-xl object-contain" />
-                        <span className="text-xl font-black uppercase tracking-tight text-white">Madonna</span>
+                        <div className="flex flex-col">
+                            <span className="text-xl font-black uppercase tracking-tight text-white">Madonna</span>
+                            <span className="text-[9px] font-semibold uppercase tracking-widest text-zinc-300">Madonna Link Express Ventures</span>
+                        </div>
                     </a>
                     <p className="text-sm leading-relaxed text-zinc-300">
                         Your premium destination for exclusive retail. Curated collections for the modern lifestyle.

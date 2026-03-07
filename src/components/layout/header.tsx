@@ -156,17 +156,22 @@ export function Header() {
                                 alt="Logo"
                                 className="h-8 w-auto flex-shrink-0 rounded-xl object-contain sm:h-10 lg:h-12"
                             />
-                            <span className="block truncate text-center font-sans text-sm font-black uppercase leading-tight tracking-tight text-zinc-900 sm:text-2xl lg:text-3xl">
-                                {mobileLeadingWords ? (
-                                    <>
-                                        <span className="sm:hidden">{mobileLeadingWords}</span>
-                                        <span className="block sm:hidden">{mobileLastWord}</span>
-                                        <span className="hidden sm:inline">{storeName}</span>
-                                    </>
-                                ) : (
-                                    storeName
-                                )}
-                            </span>
+                            <div className="flex flex-col text-center">
+                                <span className="block truncate font-sans text-sm font-black uppercase leading-tight tracking-tight text-zinc-900 sm:text-2xl lg:text-3xl">
+                                    {mobileLeadingWords ? (
+                                        <>
+                                            <span className="sm:hidden">{mobileLeadingWords}</span>
+                                            <span className="block sm:hidden">{mobileLastWord}</span>
+                                            <span className="hidden sm:inline">{storeName}</span>
+                                        </>
+                                    ) : (
+                                        storeName
+                                    )}
+                                </span>
+                                <span className="text-[8px] font-semibold uppercase tracking-widest text-zinc-500 sm:text-[10px]">
+                                    Madonna Link Express Ventures
+                                </span>
+                            </div>
                         </Link>
                     </div>
 
