@@ -4,12 +4,12 @@
   "private": true,
   "scripts": {
     "dev:web": "vite",
-    "dev:api": "tsx watch backend/server.ts",
+    "dev:api": "cd functions && npm run serve",
     "dev": "concurrently -k \"npm:dev:api\" \"npm:dev:web\"",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit",
-    "start:api": "tsx backend/server.ts",
+    "start:api": "npm run dev:api",
     "seed": "tsx scripts/seed.ts",
     "make-admin": "tsx scripts/make-admin.ts",
     "doctor": "tsx scripts/doctor.ts"

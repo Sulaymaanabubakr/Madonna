@@ -1,0 +1,125 @@
+[debug] [2026-03-07T05:07:55.205Z] ----------------------------------------------------------------------
+[debug] [2026-03-07T05:07:55.210Z] Command:       /usr/local/bin/node /Users/sulaymaanabubakr/.npm-global/bin/firebase emulators:start --only functions
+[debug] [2026-03-07T05:07:55.211Z] CLI Version:   15.8.0
+[debug] [2026-03-07T05:07:55.211Z] Platform:      darwin
+[debug] [2026-03-07T05:07:55.211Z] Node Version:  v24.12.0
+[debug] [2026-03-07T05:07:55.211Z] Time:          Sat Mar 07 2026 06:07:55 GMT+0100 (West Africa Standard Time)
+[debug] [2026-03-07T05:07:55.212Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-03-07T05:08:02.355Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-03-07T05:08:02.356Z] > authorizing via signed-in user (abubakrysulaimaan24434@gmail.com)
+[info] i  emulators: Starting emulators: functions {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions"}}
+[debug] [2026-03-07T05:08:02.859Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-03-07T05:08:02.860Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-03-07T05:08:02.871Z] Found emulator hub locator: {"version":"15.8.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"pid":4145}
+[debug] [2026-03-07T05:08:02.872Z] Write emulator hub locator at /var/folders/7z/7f7rgmc55kn06p_pz3sy5p_80000gn/T/hub-madonna-shopping-arena.json
+[debug] [2026-03-07T05:08:03.305Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-03-07T05:08:03.305Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-03-07T05:08:03.306Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-03-07T05:08:03.306Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: \u001b[1mapphosting, auth, firestore, database, hosting, pubsub, storage, dataconnect\u001b[22m"}}
+[warn] ⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful! {"metadata":{"emulator":{"name":"functions"},"message":"Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!"}}
+[debug] [2026-03-07T05:08:07.873Z] Checked if tokens are valid: true, expires at: 1772863031430
+[debug] [2026-03-07T05:08:07.874Z] Checked if tokens are valid: true, expires at: 1772863031430
+[debug] [2026-03-07T05:08:07.875Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/madonna-shopping-arena/adminSdkConfig [none]
+[debug] [2026-03-07T05:08:08.482Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/madonna-shopping-arena/adminSdkConfig 200
+[debug] [2026-03-07T05:08:08.482Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/madonna-shopping-arena/adminSdkConfig {"projectId":"madonna-shopping-arena","storageBucket":"madonna-shopping-arena.firebasestorage.app"}
+[info] i  functions: Watching "/Users/sulaymaanabubakr/Desktop/Madonna/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/sulaymaanabubakr/Desktop/Madonna/functions\" for Cloud Functions..."}}
+[debug] [2026-03-07T05:08:08.556Z] Validating nodejs source
+[debug] [2026-03-07T05:08:10.225Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "npx esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=lib/index.js --external:firebase-admin --external:firebase-functions --external:express --external:cors --external:cloudinary --external:dotenv --format=cjs",
+    "build:watch": "npx esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=lib/index.js --external:firebase-admin --external:firebase-functions --external:express --external:cors --external:cloudinary --external:dotenv --format=cjs --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "24"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "cloudinary": "^2.9.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^4.22.1",
+    "firebase-admin": "^13.7.0",
+    "firebase-functions": "^7.1.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "esbuild": "^0.27.3",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.4.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3"
+  },
+  "private": true
+}
+[debug] [2026-03-07T05:08:10.226Z] Building nodejs source
+[debug] [2026-03-07T05:08:10.227Z] Failed to find version of module node: reached end of search path /Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules
+[info] ✔  functions: Using node@24 from host. 
+[debug] [2026-03-07T05:08:10.230Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-03-07T05:08:10.248Z] Found firebase-functions binary at '/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/.bin/firebase-functions'
+[info] Serving at port 8507
+
+[info] [dotenv@17.3.1] injecting env (19) from ../.env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+[debug] [2026-03-07T05:08:14.906Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"api"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] ✔  functions: Loaded functions definitions from source: api. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api."}}
+[info] ✔  functions[us-central1-api]: http function initialized (http://127.0.0.1:5001/madonna-shopping-arena/us-central1/api). {"metadata":{"emulator":{"name":"functions"},"message":"\u001b[1mhttp\u001b[22m function initialized (http://127.0.0.1:5001/madonna-shopping-arena/us-central1/api)."}}
+[debug] [2026-03-07T05:08:19.027Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-03-07T05:08:39.479Z] [work-queue] {"queuedWork":["/madonna-shopping-arena/us-central1/api/api/health-2026-03-07T05:08:39.479Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-03-07T05:08:39.479Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/madonna-shopping-arena/us-central1/api/api/health-2026-03-07T05:08:39.479Z"],"workRunningCount":1}
+[debug] [2026-03-07T05:08:39.480Z] Accepted request GET /madonna-shopping-arena/us-central1/api/api/health --> us-central1-api
+[debug] [2026-03-07T05:08:39.482Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-03-07T05:08:39.482Z] [functions] Got req.url=/madonna-shopping-arena/us-central1/api/api/health, mapping to path=/api/health {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/madonna-shopping-arena/us-central1/api/api/health, mapping to path=/api/health"}}
+[debug] [2026-03-07T05:08:39.495Z] [worker-pool] addWorker(us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-api)"}}
+[debug] [2026-03-07T05:08:39.499Z] [worker-pool] Adding worker with key us-central1-api, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-api, total=1"}}
+[debug] [2026-03-07T05:08:46.635Z] [runtime-status] [5454] Resolved module firebase-admin {"declared":true,"installed":true,"version":"13.7.0","resolution":"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"13.7.0\",\"resolution\":\"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-03-07T05:08:46.638Z] [runtime-status] [5454] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.1.0","resolution":"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"7.1.0\",\"resolution\":\"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-03-07T05:08:46.639Z] [runtime-status] [5454] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2026-03-07T05:08:46.640Z] [runtime-status] [5454] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.1.0","resolution":"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"7.1.0\",\"resolution\":\"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-03-07T05:08:46.640Z] [runtime-status] [5454] Detected firebase-functions v7+, skipping legacy stubs. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Detected firebase-functions v7+, skipping legacy stubs."}}
+[debug] [2026-03-07T05:08:46.641Z] [runtime-status] [5454] Resolved module firebase-admin {"declared":true,"installed":true,"version":"13.7.0","resolution":"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"13.7.0\",\"resolution\":\"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-03-07T05:08:47.080Z] [runtime-status] [5454] Resolved module firebase-functions {"declared":true,"installed":true,"version":"7.1.0","resolution":"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"7.1.0\",\"resolution\":\"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-03-07T05:08:49.354Z] [runtime-status] [5454] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"13.7.0","resolution":"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"13.7.0\",\"resolution\":\"/Users/sulaymaanabubakr/Desktop/Madonna/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[info] >  [dotenv@17.3.1] injecting env (19) from ../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand` {"user":"[dotenv@17.3.1] injecting env (19) from ../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"\u001b[90m> \u001b[39m [dotenv@17.3.1] injecting env (19) from ../.env -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`"}}
+[debug] [2026-03-07T05:08:51.697Z] [runtime-status] [5454] Functions runtime initialized. {"cwd":"/Users/sulaymaanabubakr/Desktop/Madonna/functions","node_version":"24.12.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Functions runtime initialized. {\"cwd\":\"/Users/sulaymaanabubakr/Desktop/Madonna/functions\",\"node_version\":\"24.12.0\"}"}}
+[debug] [2026-03-07T05:08:51.697Z] [runtime-status] [5454] Listening to port: /var/folders/7z/7f7rgmc55kn06p_pz3sy5p_80000gn/T/fire_emu_a558e312dc597d6d.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [5454] Listening to port: /var/folders/7z/7f7rgmc55kn06p_pz3sy5p_80000gn/T/fire_emu_a558e312dc597d6d.sock"}}
+[debug] [2026-03-07T05:08:51.776Z] [worker-us-central1-api-4ac16867-757e-4604-887c-147d2e631305]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-4ac16867-757e-4604-887c-147d2e631305]: IDLE"}}
+[debug] [2026-03-07T05:08:51.781Z] [worker-pool] submitRequest(triggerId=us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-api)"}}
+[info] i  functions: Beginning execution of "us-central1-api" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Beginning execution of \"us-central1-api\""}}
+[debug] [2026-03-07T05:08:51.782Z] [worker-us-central1-api-4ac16867-757e-4604-887c-147d2e631305]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-4ac16867-757e-4604-887c-147d2e631305]: BUSY"}}
+[debug] [2026-03-07T05:08:52.065Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-api" in 282.924212ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finished \"us-central1-api\" in 282.924212ms"}}
+[debug] [2026-03-07T05:08:52.065Z] [worker-us-central1-api-4ac16867-757e-4604-887c-147d2e631305]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-4ac16867-757e-4604-887c-147d2e631305]: IDLE"}}
+[debug] [2026-03-07T05:08:52.066Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-03-07T05:08:52.066Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-03-07T05:08:52.066Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}

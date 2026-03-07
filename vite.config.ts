@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       proxy: {
         "/api": {
-          target: env.VITE_API_PROXY_TARGET || "http://localhost:3001",
+          target: env.VITE_API_PROXY_TARGET || "http://127.0.0.1:5001/madonna-shopping-arena/us-central1/api",
           changeOrigin: true,
         },
       },

@@ -1,4 +1,17 @@
-import "dotenv/config";
+import dotenv from "dotenv";
+import path from "node:path";
+import fs from "node:fs";
+
+// Support both standalone start (cwd is root) and Firebase Emulator start (cwd is functions)
+const envPath = process.cwd().endsWith("functions")
+  ? path.resolve(process.cwd(), "../.env")
+  : path.resolve(process.cwd(), ".env");
+
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config();
+}
 
 import cors from "cors";
 import express from "express";
@@ -649,11 +662,5 @@ app.get("/api/admin/products", async (req, res) => {
     res.status(403).json({ error: (error as Error).message });
   }
 });
-
-if (process.env.VERCEL !== "1") {
-  app.listen(PORT, () => {
-    console.log(`API server running on http://localhost:${PORT}`);
-  });
-}
 
 export default app;
