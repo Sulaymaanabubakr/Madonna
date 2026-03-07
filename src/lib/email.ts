@@ -1,20 +1,20 @@
-const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
-const EMAIL_FROM = process.env.EMAIL_FROM || "";
-
 const BRAND_COLOR = "#8B2030";
-const STORE_NAME = process.env.EMAIL_FROM_NAME || "Madonna Shopping Arena — Madonna Link Express Ventures";
 
 /** Parse "Name <email>" format into { name, email } */
-function parseSender(from: string): { name: string; email: string } {
+function parseSender(from: string, storeName: string): { name: string; email: string } {
   const match = from.match(/^(.+?)\s*<(.+?)>$/);
   if (match) return { name: match[1].trim(), email: match[2].trim() };
-  return { name: STORE_NAME, email: from.trim() };
+  return { name: storeName, email: from.trim() };
 }
 
 export async function sendOrderEmail(to: string, orderNumber: string) {
+  const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
+  const EMAIL_FROM = process.env.EMAIL_FROM || "";
+  const STORE_NAME = process.env.EMAIL_FROM_NAME || "Madonna Shopping Arena — Madonna Link Express Ventures";
+
   if (!BREVO_API_KEY || !EMAIL_FROM) return;
 
-  const sender = parseSender(EMAIL_FROM);
+  const sender = parseSender(EMAIL_FROM, STORE_NAME);
 
   const html = `
 <!DOCTYPE html>
