@@ -1,0 +1,24 @@
+{"users": [
+{
+  "localId": "FxtKmYubboTd0mXFhA0GvqOKM2J3",
+  "email": "abubakrysulaimaan24434@gmail.com",
+  "emailVerified": false,
+  "passwordHash": "k45fS5RTsq0wl0UzmGYf+6Jf+/BqT9gnC+1MNG+CTErkGjS2Ej1uAlAJgy5JYB8sTuYiHSRjCKA3igUlBJr1bQ==",
+  "salt": "eEiD/CIxuHZMZg==",
+  "displayName": "Sulaymaan Abubakr ",
+  "lastSignedInAt": "1772881852597",
+  "createdAt": "1772520123705",
+  "providerUserInfo": []
+},
+{
+  "localId": "iwhiX4TdtKYmQARXqkK6Kzy7Xrk1",
+  "email": "madonnaexpresslinkventure@gmail.com",
+  "emailVerified": true,
+  "passwordHash": "0Vlb3FCU9dGYFNtPe01wJR4HWfYz2Ht7e5MEdcSB9IJeOu+CcszvigYrbaujM1FbxhVmjDq4zFkSVUG0NpSIvA==",
+  "salt": "s0FgQuURSWF1ZQ==",
+  "displayName": "Store Admin",
+  "lastSignedInAt": "1772885840257",
+  "createdAt": "1772456349847",
+  "disabled": false,
+  "providerUserInfo": []
+}]}
