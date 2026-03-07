@@ -12,9 +12,17 @@ export async function sendOrderEmail(to: string, orderNumber: string) {
   const EMAIL_FROM = process.env.EMAIL_FROM || "";
   const STORE_NAME = process.env.EMAIL_FROM_NAME || "Madonna Shopping Arena — Madonna Link Express Ventures";
 
-  if (!BREVO_API_KEY || !EMAIL_FROM) return;
+  console.log("[sendOrderEmail] called:", { to, orderNumber });
+  console.log("[sendOrderEmail] BREVO_API_KEY present:", !!BREVO_API_KEY, "length:", BREVO_API_KEY.length);
+  console.log("[sendOrderEmail] EMAIL_FROM present:", !!EMAIL_FROM, "value:", EMAIL_FROM);
+
+  if (!BREVO_API_KEY || !EMAIL_FROM) {
+    console.log("[sendOrderEmail] SKIPPED — missing BREVO_API_KEY or EMAIL_FROM");
+    return;
+  }
 
   const sender = parseSender(EMAIL_FROM, STORE_NAME);
+  console.log("[sendOrderEmail] sender:", sender);
 
   const html = `
 <!DOCTYPE html>
@@ -88,18 +96,24 @@ export async function sendOrderEmail(to: string, orderNumber: string) {
 </body>
 </html>`;
 
-  await fetch("https://api.brevo.com/v3/smtp/email", {
-    method: "POST",
-    headers: {
-      "api-key": BREVO_API_KEY,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      sender: { name: sender.name, email: sender.email },
-      to: [{ email: to }],
-      subject: `Order ${orderNumber} Confirmed — ${STORE_NAME}`,
-      htmlContent: html,
-    }),
-  });
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": BREVO_API_KEY,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        sender: { name: sender.name, email: sender.email },
+        to: [{ email: to }],
+        subject: `Order ${orderNumber} Confirmed — ${STORE_NAME}`,
+        htmlContent: html,
+      }),
+    });
+    const resBody = await res.text();
+    console.log("[sendOrderEmail] Brevo response:", res.status, resBody);
+  } catch (err) {
+    console.error("[sendOrderEmail] Brevo fetch error:", err);
+  }
 }
