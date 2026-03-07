@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://us-central1-madonna-shopping-arena.cloudfunctions.net/api/api/$1"
+      "destination": "https://europe-west1-madonna-shopping-arena.cloudfunctions.net/api/api/$1"
     },
     {
       "source": "/(.*)",
