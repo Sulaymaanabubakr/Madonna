@@ -28,6 +28,7 @@ import { serializeProduct } from "../../../src/lib/product-serialization";
 import { serializeStoreSettings, defaultStoreSettings } from "../../../src/lib/settings-serialization";
 
 const app = express();
+app.set("trust proxy", true);
 const PORT = Number(process.env.PORT || 3001);
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || "";
 

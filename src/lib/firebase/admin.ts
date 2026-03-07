@@ -32,9 +32,8 @@ function ensureInitialized() {
         throw new Error(`Firebase Admin initialization failed. ${(error as Error).message}`);
       }
     } else {
-      if (process.env.NODE_ENV === "production") {
-        throw new Error("Missing Firebase Admin environment variables");
-      }
+      // Inside Firebase Cloud Functions, Application Default Credentials (ADC) are
+      // automatically available — no explicit env vars needed.
       initializeApp({ credential: applicationDefault() });
     }
   }
