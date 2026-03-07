@@ -2,9 +2,15 @@ const BRAND_COLOR = "#8B2030";
 
 /** Parse "Name <email>" format into { name, email } */
 function parseSender(from: string, storeName: string): { name: string; email: string } {
-  const match = from.match(/^(.+?)\s*<(.+?)>$/);
-  if (match) return { name: match[1].trim(), email: match[2].trim() };
-  return { name: storeName, email: from.trim() };
+  // Strip any literal surrounding quotes that might have been saved in the secret
+  const cleanFrom = from.replace(/^["']|["']$/g, "").trim();
+  const match = cleanFrom.match(/<([^>]+)>/);
+  if (match) {
+    const email = match[1].trim();
+    const namePart = cleanFrom.split("<")[0].trim();
+    return { name: namePart || storeName, email };
+  }
+  return { name: storeName, email: cleanFrom };
 }
 
 export async function sendOrderEmail(to: string, orderNumber: string) {
