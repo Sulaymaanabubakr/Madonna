@@ -25,7 +25,7 @@ export function AboutPage() {
           </h2>
           <div className="mx-auto mb-8 mt-4 h-[2px] w-[50px] bg-[#8B2030]" />
           <p className="text-sm leading-relaxed text-zinc-600 md:text-base md:leading-loose">
-            At Madonna Shopping Arena, we believe that premium quality products should not be out of reach. Located in
+            At Madonna Shopping Arena (Madonna Link Express Ventures), we believe that premium quality products should not be out of reach. Located in
             the heart of Oshodi, Lagos, our mission is to deliver an exceptional shopping experience spanning Fashion,
             Beauty, and Groceries. Every item in our catalog is meticulously sourced and curated to ensure you get
             exactly what you desire, without compromise.

@@ -42,7 +42,9 @@ export function Footer() {
             <div className="border-t border-white/20">
                 <div className="container mx-auto flex max-w-[1240px] items-center justify-center px-4 py-8">
                     <p className="text-[13px] text-zinc-300">
-                        Madonna Shopping Arena. © 2026. All Rights Reserved
+                        Madonna Shopping Arena
+                        <br />
+                        Madonna Link Express Ventures. © 2026. All Rights Reserved
                     </p>
                 </div>
             </div>

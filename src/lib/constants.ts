@@ -1,5 +1,6 @@
 export const BUSINESS = {
   name: "Madonna Shopping Arena",
+  subtitle: "Madonna Link Express Ventures",
   landmark: "Madonna Shopping Arena",
   address: "21/22 Akinosho Street, Off Afariogun, Along Airport Road, Oshodi, Lagos, Nigeria",
   phone: "07063006033",

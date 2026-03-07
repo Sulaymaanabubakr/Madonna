@@ -104,7 +104,7 @@ export function AdminSettingsPage() {
               <Input
                 value={settings.storeName || ""}
                 onChange={(e) => setSettings({ ...settings, storeName: e.target.value })}
-                placeholder="Madonna Shopping Arena"
+                placeholder="Madonna Shopping Arena — Madonna Link Express Ventures"
               />
             </div>
             <div className="space-y-2">

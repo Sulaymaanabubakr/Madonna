@@ -2,7 +2,7 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
 const EMAIL_FROM = process.env.EMAIL_FROM || "";
 
 const BRAND_COLOR = "#8B2030";
-const STORE_NAME = process.env.EMAIL_FROM_NAME || "Madonna Shopping Arena";
+const STORE_NAME = process.env.EMAIL_FROM_NAME || "Madonna Shopping Arena — Madonna Link Express Ventures";
 
 /** Parse "Name <email>" format into { name, email } */
 function parseSender(from: string): { name: string; email: string } {

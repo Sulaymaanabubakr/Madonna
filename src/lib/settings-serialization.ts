@@ -33,7 +33,7 @@ export const defaultStoreSettings: StoreSettings = {
   whatsapp: BUSINESS.whatsapp,
   deliveryFee: 2000,
   announcementEnabled: true,
-  announcementText: "Welcome to Madonna Shopping Arena. Shop quality products with confidence.",
+  announcementText: "Welcome to Madonna Shopping Arena — Madonna Link Express Ventures. Shop quality products with confidence.",
   announcementSpeed: 22,
   updatedAt: new Date().toISOString(),
 };
